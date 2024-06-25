@@ -1,0 +1,49 @@
+.gameContainer{
+    height: 100vh;
+}
+
+.draggableContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.container{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+.draggable {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    width:100px;
+    height:100px;
+    float:right;    
+    margin: 60px;
+  }
+
+  .non-draggable {
+    cursor:initial; /* or any other style to indicate non-draggable */
+}
+
+.draggableContainer img{
+    width: 100%;
+    height: 100%;
+}
+
+#topLeft img{
+    transform: scaleX(-1) rotate(180deg);
+}
+
+#topRight img{
+    transform: rotate(180deg);
+}
+
+#bottomRight img{
+    transform: scaleX(-1);
+}
