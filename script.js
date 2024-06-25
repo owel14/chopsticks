@@ -1,3 +1,4 @@
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
     new DraggableManager();
 });
@@ -20,42 +21,46 @@ class DraggableManager {
     }
 
     makeElementDraggable(element) {
-        // Attach mousedown event listener to make element draggable
+        // Attach mousedown and touchstart event listeners to make element draggable
         element.addEventListener('mousedown', (e) => this.dragMouseDown(e, element));
+        element.addEventListener('touchstart', (e) => this.dragMouseDown(e, element));
     }
 
     dragMouseDown(e, element) {
         e.preventDefault();
 
-        // Record the initial mouse position and element position
-        const initialMousePos = { x: e.clientX, y: e.clientY };
+        // Use touch or mouse coordinates
+        const initialMousePos = e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
         const initialElementPos = this.getElementPosition(element);
 
-        // Define mousemove and mouseup event listeners
+        // Define mousemove/touchmove and mouseup/touchend event listeners
         const onMouseMove = (e) => this.elementDrag(e, element, initialMousePos, initialElementPos);
         const onMouseUp = () => this.closeDragElement(element, onMouseMove, onMouseUp);
 
         // Attach event listeners for dragging and releasing the element
         document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('touchmove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('touchend', onMouseUp);
 
         // Increase z-index to ensure this element is on top
         this.currentZIndex++;
         element.style.zIndex = this.currentZIndex;
-
     }
 
     elementDrag(e, element, initialMousePos, initialElementPos) {
         e.preventDefault();
 
-        // Calculate the new position based on mouse movement
-        const deltaX = e.clientX - initialMousePos.x;
-        const deltaY = e.clientY - initialMousePos.y;
+        // Use touch or mouse coordinates
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        // Calculate the new position based on mouse/touch movement
+        const deltaX = clientX - initialMousePos.x;
+        const deltaY = clientY - initialMousePos.y;
 
         // Update the element's transform property to move it
         element.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-        console.log('Element being dragged:', element, 'DeltaX:', deltaX, 'DeltaY:', deltaY);
 
         // Show overlap preview if the element is overlapping another
         this.showOverlapPreview(element);
@@ -64,13 +69,14 @@ class DraggableManager {
     closeDragElement(element, onMouseMove, onMouseUp) {
         // Remove event listeners
         document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('touchmove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('touchend', onMouseUp);
 
         // Calculate the final position based on the transform values
         const transformValues = element.style.transform.match(/translate\(([^px]*)px, ([^px]*)px\)/);
         const deltaX = parseInt(transformValues[1], 10);
         const deltaY = parseInt(transformValues[2], 10);
-
 
         // Apply final position and reset transform
         element.style.left = `${element.offsetLeft + deltaX}px`;
@@ -80,7 +86,6 @@ class DraggableManager {
         const changesCommitted = this.commitChangesOnOverlap(element);
         if (changesCommitted) {
             this.updatePosition(element, deltaX, deltaY);
-            console.log('Changes committed for element:', element);
         } else {
             // Reset transform if no changes were committed
             element.style.transform = 'none';
