@@ -1,18 +1,25 @@
 .gameContainer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
     height: 100vh;
+}
+
+.container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    margin-bottom: 10px;
 }
 
 .draggableContainer{
     display: flex;
     justify-content: center;
-    align-items: center;
-}
-
-
-.container{
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
     align-items: center;
 }
 
@@ -23,11 +30,11 @@
     cursor: grab;
     width:100px;
     height:100px;
-    float:right;    
+    float:right;
     margin: 60px;
-  }
+}
 
-  .non-draggable {
+.non-draggable {
     cursor:initial; /* or any other style to indicate non-draggable */
 }
 
@@ -46,4 +53,24 @@
 
 #bottomRight img{
     transform: scaleX(-1);
+}
+
+/* Ensure hrContainer is a flex item */
+.hrContainer {
+    display: flex;
+    justify-content: center;
+    width: 100vw;
+}
+/* Style for hr element */
+hr {
+    width: 100vw;
+    border: none;
+    border-top: 10px solid grey;
+}
+
+header {
+    font-family: "Press Start 2P", system-ui;
+    font-weight: 400;
+    font-size: 25px;
+    font-style: normal;
 }
