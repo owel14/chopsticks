@@ -1,12 +1,14 @@
-// script.js
 document.addEventListener('DOMContentLoaded', () => {
-    new DraggableManager();
+    const gameManager = new GameManager();
+    const draggableManager = new DraggableManager(gameManager);
+    gameManager.setDraggableManager(draggableManager); // Set the draggable manager in game manager for resetting UI
 });
 
 class DraggableManager {
-    constructor() {
+    constructor(gameManager) {
         this.currentZIndex = 1; // Initialize current highest z-index
         this.previewElements = new Map(); // To track elements being previewed
+        this.gameManager = gameManager; // Assign game manager
         this.initializeDraggableElements(); // Initialize draggable elements on page load
     }
 
@@ -29,6 +31,11 @@ class DraggableManager {
     dragMouseDown(e, element) {
         e.preventDefault();
 
+        // Check if the element belongs to the current player
+        if (!this.isCurrentPlayerTurn(element)) {
+            return; // Do nothing if it's not the current player's turn
+        }
+
         // Use touch or mouse coordinates
         const initialMousePos = e.touches ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
         const initialElementPos = this.getElementPosition(element);
@@ -39,9 +46,9 @@ class DraggableManager {
 
         // Attach event listeners for dragging and releasing the element
         document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('touchmove', onMouseMove);
+        document.addEventListener('touchmove', onMouseMove, { passive: false });
         document.addEventListener('mouseup', onMouseUp);
-        document.addEventListener('touchend', onMouseUp);
+        document.addEventListener('touchend', onMouseUp, { passive: false });
 
         // Increase z-index to ensure this element is on top
         this.currentZIndex++;
@@ -113,10 +120,8 @@ class DraggableManager {
         otherElements.forEach(otherElement => {
             if (otherElement !== element && this.isOverlapping(element, otherElement)) {
                 isOverlappingAny = true;
-                const elementImg = element.querySelector('img');
-                const otherElementImg = otherElement.querySelector('img');
-                const sum = this.calculateSum(elementImg.alt, otherElementImg.alt);
-                this.updatePreview(otherElementImg, sum);
+                const sum = this.calculateSum(element.id, otherElement.id);
+                this.updatePreview(otherElement, sum);
             }
         });
 
@@ -125,21 +130,21 @@ class DraggableManager {
         }
     }
 
-    calculateSum(alt1, alt2) {
-        // Calculate the sum of alt attributes (assumes numeric values)
-        const value1 = parseInt(alt1, 10);
-        const value2 = parseInt(alt2, 10);
+    calculateSum(id1, id2) {
+        // Calculate the sum of values based on the game state
+        const value1 = this.gameManager.getValueById(id1);
+        const value2 = this.gameManager.getValueById(id2);
         return (!isNaN(value1) && !isNaN(value2)) ? value1 + value2 : null;
     }
 
-    updatePreview(elementImg, sum) {
+    updatePreview(element, sum) {
         // Update preview image based on sum
         if (sum !== null) {
+            const elementImg = element.querySelector('img');
             const originalSrc = elementImg.src;
-            const originalAlt = elementImg.alt;
             elementImg.src = `img/${sum >= 5 ? 0 : sum}.png`;
             if (!this.previewElements.has(elementImg)) {
-                this.previewElements.set(elementImg, { src: originalSrc, alt: originalAlt });
+                this.previewElements.set(elementImg, { src: originalSrc });
             }
         }
     }
@@ -148,7 +153,6 @@ class DraggableManager {
         // Revert all preview images to their original state
         this.previewElements.forEach((value, key) => {
             key.src = value.src;
-            key.alt = value.alt;
         });
         this.previewElements.clear();
     }
@@ -159,21 +163,55 @@ class DraggableManager {
         const otherElements = document.querySelectorAll('.draggable');
         otherElements.forEach(otherElement => {
             if (otherElement !== element && this.isOverlapping(element, otherElement)) {
-                const elementImg = element.querySelector('img');
-                const otherElementImg = otherElement.querySelector('img');
-                const sum = this.calculateSum(elementImg.alt, otherElementImg.alt);
+                const sum = this.calculateSum(element.id, otherElement.id);
                 if (sum !== null) {
-                    otherElementImg.src = `img/${sum >= 5 ? 0 : sum}.png`;
-                    otherElementImg.alt = sum >= 5 ? '0' : sum.toString();
+                    this.gameManager.updateValueById(otherElement.id, sum >= 5 ? 0 : sum);
+                    this.updateUI();
                     changeCommitted = true;
                     // Remove the element from the previewElements map since the change is committed
+                    const otherElementImg = otherElement.querySelector('img');
                     if (this.previewElements.has(otherElementImg)) {
                         this.previewElements.delete(otherElementImg);
                     }
+                    this.gameManager.checkGameEnd();
                 }
             }
         });
+        if (changeCommitted) {
+            this.gameManager.switchTurn();
+        }
         return changeCommitted;
+    }
+
+    updateUI() {
+        // Update the UI based on the game state
+        this.updateElementUI('topLeft');
+        this.updateElementUI('topRight');
+        this.updateElementUI('bottomLeft');
+        this.updateElementUI('bottomRight');
+    }
+
+    updateElementUI(id) {
+        const element = document.getElementById(id).querySelector('img');
+        const value = this.gameManager.getValueById(id);
+        element.alt = value;
+        element.src = `img/${value}.png`;
+    }
+
+    resetUI() {
+        // Reset the UI to the default state
+        this.updateUI(); // Ensure the UI matches the game state after resetting
+        this.resetElementPosition('topLeft');
+        this.resetElementPosition('topRight');
+        this.resetElementPosition('bottomLeft');
+        this.resetElementPosition('bottomRight');
+    }
+
+    resetElementPosition(id) {
+        const element = document.getElementById(id);
+        element.style.left = '';
+        element.style.top = '';
+        element.style.transform = 'none';
     }
 
     isOverlapping(el1, el2) {
@@ -184,5 +222,98 @@ class DraggableManager {
                  rect1.left > rect2.right ||
                  rect1.bottom < rect2.top ||
                  rect1.top > rect2.bottom);
+    }
+
+    isCurrentPlayerTurn(element) {
+        const currentPlayer = this.gameManager.getCurrentPlayer();
+        if (currentPlayer === 'player1') {
+            return element.id === 'topLeft' || element.id === 'topRight';
+        } else {
+            return element.id === 'bottomLeft' || element.id === 'bottomRight';
+        }
+    }
+}
+
+class GameManager {
+    constructor() {
+        this.gameState = {
+            player1: { left: 1, right: 1 },
+            player2: { left: 1, right: 1 },
+            currentPlayer: 'player1',
+            gameFinished: false
+        };
+        this.draggableManager = null;
+    }
+
+    setDraggableManager(draggableManager) {
+        this.draggableManager = draggableManager;
+    }
+
+    getValueById(id) {
+        switch(id) {
+            case 'topLeft':
+                return this.gameState.player1.left;
+            case 'topRight':
+                return this.gameState.player1.right;
+            case 'bottomLeft':
+                return this.gameState.player2.left;
+            case 'bottomRight':
+                return this.gameState.player2.right;
+            default:
+                return null;
+        }
+    }
+
+    updateValueById(id, value) {
+        switch(id) {
+            case 'topLeft':
+                this.gameState.player1.left = value;
+                break;
+            case 'topRight':
+                this.gameState.player1.right = value;
+                break;
+            case 'bottomLeft':
+                this.gameState.player2.left = value;
+                break;
+            case 'bottomRight':
+                this.gameState.player2.right = value;
+                break;
+            default:
+                break;
+        }
+    }
+
+    resetGame() {
+        // Reset the game state and UI
+        this.gameState = {
+            player1: { left: 1, right: 1 },
+            player2: { left: 1, right: 1 },
+            currentPlayer: 'player1',
+            gameFinished: false
+        };
+        this.draggableManager.resetUI();
+    }
+
+    checkGameEnd() {
+        // Check if the game has ended based on the game state
+        if (this.gameState.player1.left === 0 && this.gameState.player1.right === 0) {
+            this.gameState.gameFinished = true;
+            alert('Player 2 wins!');
+        } else if (this.gameState.player2.left === 0 && this.gameState.player2.right === 0) {
+            this.gameState.gameFinished = true;
+            alert('Player 1 wins!');
+        }
+
+        if(this.gameState.gameFinished) {
+            this.resetGame();
+        }
+    }
+
+    getCurrentPlayer() {
+        return this.gameState.currentPlayer;
+    }
+
+    switchTurn() {
+        this.gameState.currentPlayer = this.gameState.currentPlayer === 'player1' ? 'player2' : 'player1';
     }
 }
