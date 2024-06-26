@@ -31,9 +31,9 @@ class DraggableManager {
     dragMouseDown(e, element) {
         e.preventDefault();
 
-        // Check if the element belongs to the current player
-        if (!this.isCurrentPlayerTurn(element)) {
-            return; // Do nothing if it's not the current player's turn
+        // Check if the element belongs to the current player and has a value greater than 0
+        if (!this.isCurrentPlayerTurn(element) || this.gameManager.getValueById(element.id) === 0) {
+            return; // Do nothing if it's not the current player's turn or the value is 0
         }
 
         // Use touch or mouse coordinates
@@ -120,7 +120,13 @@ class DraggableManager {
         otherElements.forEach(otherElement => {
             if (otherElement !== element && this.isOverlapping(element, otherElement)) {
                 isOverlappingAny = true;
-                const sum = this.calculateSum(element.id, otherElement.id);
+                let sum;
+
+                if (this.isSamePlayer(element, otherElement)) {
+                    sum = this.calculateSplitSum(element.id, otherElement.id);
+                } else {
+                    sum = this.calculateSum(element.id, otherElement.id);
+                }
                 this.updatePreview(otherElement, sum);
             }
         });
@@ -135,6 +141,13 @@ class DraggableManager {
         const value1 = this.gameManager.getValueById(id1);
         const value2 = this.gameManager.getValueById(id2);
         return (!isNaN(value1) && !isNaN(value2)) ? value1 + value2 : null;
+    }
+
+    calculateSplitSum(id1, id2) {
+        // Calculate the split sum for same player's hands
+        const value1 = this.gameManager.getValueById(id1);
+        const value2 = this.gameManager.getValueById(id2);
+        return (!isNaN(value1) && value1 > 0) ? value2 + 1 : null;
     }
 
     updatePreview(element, sum) {
@@ -163,17 +176,30 @@ class DraggableManager {
         const otherElements = document.querySelectorAll('.draggable');
         otherElements.forEach(otherElement => {
             if (otherElement !== element && this.isOverlapping(element, otherElement)) {
-                const sum = this.calculateSum(element.id, otherElement.id);
-                if (sum !== null) {
+                const draggedValue = this.gameManager.getValueById(element.id);
+                const targetValue = this.gameManager.getValueById(otherElement.id);
+
+                if (this.isSamePlayer(element, otherElement) && draggedValue > 0) {
+                    // Decrement dragged element value and increment target element value
+                    this.gameManager.updateValueById(element.id, draggedValue - 1);
+                    this.gameManager.updateValueById(otherElement.id, targetValue + 1);
+
+                    this.updateUI();
+                    changeCommitted = true;
+                    this.gameManager.checkGameEnd();
+                } else if (this.isDifferentPlayer(element, otherElement) && draggedValue > 0) {
+                    // Apply the original sum logic for different player hands
+                    const sum = draggedValue + targetValue;
                     this.gameManager.updateValueById(otherElement.id, sum >= 5 ? 0 : sum);
                     this.updateUI();
                     changeCommitted = true;
-                    // Remove the element from the previewElements map since the change is committed
-                    const otherElementImg = otherElement.querySelector('img');
-                    if (this.previewElements.has(otherElementImg)) {
-                        this.previewElements.delete(otherElementImg);
-                    }
                     this.gameManager.checkGameEnd();
+                }
+
+                // Remove the element from the previewElements map since the change is committed
+                const otherElementImg = otherElement.querySelector('img');
+                if (this.previewElements.has(otherElementImg)) {
+                    this.previewElements.delete(otherElementImg);
                 }
             }
         });
@@ -199,38 +225,45 @@ class DraggableManager {
     }
 
     resetUI() {
-        // Reset the UI to the default state
-        this.updateUI(); // Ensure the UI matches the game state after resetting
-        this.resetElementPosition('topLeft');
-        this.resetElementPosition('topRight');
-        this.resetElementPosition('bottomLeft');
-        this.resetElementPosition('bottomRight');
+        // Reset the UI to the initial state
+        this.updateUI();
+        this.previewElements.clear();
+        this.initializeDraggableElements();
     }
 
-    resetElementPosition(id) {
-        const element = document.getElementById(id);
-        element.style.left = '';
-        element.style.top = '';
-        element.style.transform = 'none';
-    }
-
-    isOverlapping(el1, el2) {
+    isOverlapping(element1, element2) {
         // Check if two elements are overlapping
-        const rect1 = el1.getBoundingClientRect();
-        const rect2 = el2.getBoundingClientRect();
+        const rect1 = element1.getBoundingClientRect();
+        const rect2 = element2.getBoundingClientRect();
         return !(rect1.right < rect2.left ||
-                 rect1.left > rect2.right ||
-                 rect1.bottom < rect2.top ||
-                 rect1.top > rect2.bottom);
+            rect1.left > rect2.right ||
+            rect1.bottom < rect2.top ||
+            rect1.top > rect2.bottom);
     }
 
     isCurrentPlayerTurn(element) {
-        const currentPlayer = this.gameManager.getCurrentPlayer();
-        if (currentPlayer === 'player1') {
+        // Check if it's the current player's turn for the given element
+        if (this.gameManager.getCurrentPlayer() === 'player1') {
             return element.id === 'topLeft' || element.id === 'topRight';
         } else {
             return element.id === 'bottomLeft' || element.id === 'bottomRight';
         }
+    }
+
+    isSamePlayer(element1, element2) {
+        // Check if two elements belong to the same player
+        const player1Ids = ['topLeft', 'topRight'];
+        const player2Ids = ['bottomLeft', 'bottomRight'];
+        return (player1Ids.includes(element1.id) && player1Ids.includes(element2.id)) ||
+            (player2Ids.includes(element1.id) && player2Ids.includes(element2.id));
+    }
+
+    isDifferentPlayer(element1, element2) {
+        // Check if two elements belong to different players
+        const player1Ids = ['topLeft', 'topRight'];
+        const player2Ids = ['bottomLeft', 'bottomRight'];
+        return (player1Ids.includes(element1.id) && player2Ids.includes(element2.id)) ||
+            (player2Ids.includes(element1.id) && player1Ids.includes(element2.id));
     }
 }
 
@@ -239,7 +272,7 @@ class GameManager {
         this.gameState = {
             player1: { left: 1, right: 1 },
             player2: { left: 1, right: 1 },
-            currentPlayer: 'player1',
+            currentPlayer: 'player2',
             gameFinished: false
         };
         this.draggableManager = null;
@@ -250,7 +283,7 @@ class GameManager {
     }
 
     getValueById(id) {
-        switch(id) {
+        switch (id) {
             case 'topLeft':
                 return this.gameState.player1.left;
             case 'topRight':
@@ -265,7 +298,7 @@ class GameManager {
     }
 
     updateValueById(id, value) {
-        switch(id) {
+        switch (id) {
             case 'topLeft':
                 this.gameState.player1.left = value;
                 break;
@@ -288,7 +321,7 @@ class GameManager {
         this.gameState = {
             player1: { left: 1, right: 1 },
             player2: { left: 1, right: 1 },
-            currentPlayer: 'player1',
+            currentPlayer: 'player2',
             gameFinished: false
         };
         this.draggableManager.resetUI();
@@ -304,7 +337,7 @@ class GameManager {
             alert('Player 1 wins!');
         }
 
-        if(this.gameState.gameFinished) {
+        if (this.gameState.gameFinished) {
             this.resetGame();
         }
     }

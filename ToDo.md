@@ -2,13 +2,13 @@
 
 2.Disable moving compute rboxes (done)
 
-3. have turns where only one side can move
+3. have turns where only one side can move (done)
 
-4. create a game state that keeps track of the game
+4. create a game state that keeps track of the game (done)
 
 5. Allow splitting between own fingers
 
-6. Disallow repetitions/identical move
+6. Disallow repetitions/identical move  
 
 7. Add a bot
 
