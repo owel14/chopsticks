@@ -121,3 +121,24 @@ body {
 .popup button:hover {
     background-color: #4681f4;
 }
+
+.split-container{
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.splitBox{
+    background-color: white;
+    padding: 140px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative
+}

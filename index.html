@@ -18,10 +18,10 @@
 <!-- notes -->
 
 <body>
-<div class="gameContainer">
-    <div class="container">
-        <header>Computer</header>
-        <div class="draggableContainer">
+    <div class="gameContainer">
+        <div class="container">
+            <header>Computer</header>
+            <div class="draggableContainer">
                 <div id="topLeft" class="draggable">
                     <img src="img/1.png" alt="1">
 
@@ -31,34 +31,47 @@
                     <img src="img/1.png" alt="1">
                 </div>
 
+            </div>
+
+
         </div>
 
-    </div>
+        <div class="hrContainer">
+            <hr>
+        </div>
 
-    <div class="hrContainer">
-        <hr>
-    </div>
-
-    <div class="container">
-        <div class="draggableContainer">
-            <div id="bottomLeft" class="draggable">
+        <div class="container">
+            <div class="draggableContainer">
+                <div id="bottomLeft" class="draggable">
                     <img src="img/1.png" alt="1">
-            </div>
+                </div>
 
-            <div id="bottomRight" class="draggable">
-                <img src="img/1.png" alt="1">
+                <div id="bottomRight" class="draggable">
+                    <img src="img/1.png" alt="1">
+                </div>
             </div>
+            <button id="splitButton">Split</button>
+            <header>Player</header>
         </div>
-        <header>Player</header>
     </div>
-</div>
 
-<div id="popupContainer" class="popup-container">
-    <div class="popup">
-        <h2 id="winnerMessage"></h2>
-        <button id="restartButton">Restart Game</button>
+    <div id="popupContainer" class="popup-container" display="none">
+        <div class="popup">
+            <h2 id="winnerMessage"></h2>
+            <button id="restartButton">New   Game</button>
+        </div>
     </div>
-</div>
+
+    <div id="splitContainer" class="split-container" style="display: none;">
+        <div id="splitBox" class="splitBox">
+            <button id="closeSplit">close</button>
+            <h2>options</h2>
+            <div id="splitOptions" class="splitOptions">
+
+            </div>
+
+        </div>
+    </div>
 </body>
 
 </html>
