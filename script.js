@@ -210,13 +210,13 @@ class GameManager {
       this.gameState.player1.right === 0
     ) {
       this.gameState.gameFinished = true;
-      this.uiManager.showPopup("You win!");
+      this.uiManager.showPopup("Computer wins!");
     } else if (
       this.gameState.player2.left === 0 &&
       this.gameState.player2.right === 0
     ) {
       this.gameState.gameFinished = true;
-      this.uiManager.showPopup("Computer wins!");
+      this.uiManager.showPopup("You win!");
     }
   }
 
