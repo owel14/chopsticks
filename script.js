@@ -276,6 +276,23 @@ class GameManager {
             gameFinished: false
         };
         this.draggableManager = null;
+        this.popupContainer = document.getElementById('popupContainer');
+        this.winnerMessage = document.getElementById('winnerMessage');
+        this.restartButton = document.getElementById('restartButton');
+        
+        this.restartButton.addEventListener('click', () => {
+            this.resetGame();
+            this.hidePopup();
+        });
+    }
+
+    showPopup(message) {
+        this.winnerMessage.textContent = message;
+        this.popupContainer.style.display = 'flex';
+    }
+
+    hidePopup() {
+        this.popupContainer.style.display = 'none';
     }
 
     setDraggableManager(draggableManager) {
@@ -331,10 +348,10 @@ class GameManager {
         // Check if the game has ended based on the game state
         if (this.gameState.player1.left === 0 && this.gameState.player1.right === 0) {
             this.gameState.gameFinished = true;
-            alert('Player 2 wins!');
+            this.showPopup('Computer wins!');
         } else if (this.gameState.player2.left === 0 && this.gameState.player2.right === 0) {
             this.gameState.gameFinished = true;
-            alert('Player 1 wins!');
+            this.showPopup('Player wins!');
         }
 
         if (this.gameState.gameFinished) {
