@@ -294,10 +294,6 @@ class UIManager {
 
     for (let i = 0; i < validDistributions.length; i++) {
 
-      const [bag1, bag2] = validDistributions[i];
-      if (bag1 === 0 || bag2 === 0) {
-        continue;
-      }
       const button = document.createElement("button");
       button.classList.add("split-option");
 
