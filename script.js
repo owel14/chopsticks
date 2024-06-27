@@ -291,11 +291,24 @@ class UIManager {
     const validDistributions = newMove.getAllValidDistributions();
     const splitOptions = document.getElementById("splitOptions");
     splitOptions.innerHTML = "";
+  
     for (let i = 0; i < validDistributions.length; i++) {
+
       const [bag1, bag2] = validDistributions[i];
       const button = document.createElement("button");
-      button.innerText = `${bag1} - ${bag2}`;
       button.classList.add("split-option");
+
+      // Create an <img> tag for each hand gesture image
+      const img1 = document.createElement("img");
+      img1.src = `img/${bag1}.png`; // Replace with actual path
+      img1.alt = `Hand ${bag1}`;
+      button.appendChild(img1);
+
+      const img2 = document.createElement("img");
+      img2.src = `img/${bag2}.png`; // Replace with actual path
+      img2.alt = `Hand ${bag2}`;
+      button.appendChild(img2);
+
       button.addEventListener("click", () => this.handleSplitClick(bag1, bag2));
       splitOptions.appendChild(button);
     }
