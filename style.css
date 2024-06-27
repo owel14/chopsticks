@@ -223,5 +223,7 @@ body {
 .active-player {
     border-radius: 25px;
     padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
     background-color: #A3EAAA;
 }
