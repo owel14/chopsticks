@@ -291,9 +291,10 @@ class UIManager {
     const validDistributions = newMove.getAllValidDistributions();
     const splitOptions = document.getElementById("splitOptions");
     splitOptions.innerHTML = "";
-
+  
     for (let i = 0; i < validDistributions.length; i++) {
 
+      const [bag1, bag2] = validDistributions[i];
       const button = document.createElement("button");
       button.classList.add("split-option");
 
