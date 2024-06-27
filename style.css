@@ -15,6 +15,7 @@
     width: 100%;
     padding: 20px;
     margin-bottom: 10px;
+    position: relative;
 }
 
 .draggableContainer{
@@ -137,8 +138,84 @@ body {
 
 .splitBox{
     background-color: white;
-    padding: 140px;
+    padding: 20px;
+    width: 300px;
+    height: 300px;
     border-radius: 20px;
     text-align: center;
     position: relative
+}
+
+.splitBox h2{
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.splitBox > div {
+    margin-top: 20px; /* Adjust spacing between h2 and buttons */
+}
+
+#closeSplit {
+    position: absolute;
+    bottom: 20px; 
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #55c2da;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#closeSplit:hover {
+    background-color: #4681f4;
+}
+
+#splitOptions {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: stretch; /* Stretch items to full width */
+}
+
+#splitOptions button {
+    flex: 1; /* Each button takes up full width */
+    margin: 5px 0; /* Adjust vertical margin between buttons */
+    background-color: #007bff;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.split-option img {
+    width: 30px; /* Adjust image width */
+    height: auto; /* Maintain aspect ratio */
+}
+
+#splitOptions button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+#splitButton {
+    position: absolute;
+    margin-left: 300px;
+    margin-bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #55c2da;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#splitButton:hover {
+    background-color: #4681f4;
 }
