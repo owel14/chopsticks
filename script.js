@@ -1,87 +1,84 @@
+// Wait for the DOM to load before initializing the game
 document.addEventListener("DOMContentLoaded", () => {
   const gameManager = new GameManager();
   const uiManager = new UIManager(gameManager);
   const draggableManager = new DraggableManager(gameManager, uiManager);
-  gameManager.setManagers(draggableManager, uiManager);
+
+  gameManager.setUIManager(uiManager);
+  gameManager.setDraggableManager(draggableManager);
+
+  gameManager.initializeGame();
 });
+
 class DraggableManager {
   constructor(gameManager, uiManager) {
-    this.currentZIndex = 1;
     this.gameManager = gameManager;
     this.uiManager = uiManager;
     this.draggedElement = null;
+    this.zIndexCounter = 1;
+
     this.initializeDraggableElements();
   }
 
+  // Initialize all draggable elements by making them draggable
   initializeDraggableElements() {
-    const draggableElements = document.querySelectorAll(".draggable");
-    draggableElements.forEach((element) => {
-      if (!element.classList.contains("non-draggable")) {
+    document
+      .querySelectorAll(".draggable:not(.non-draggable)")
+      .forEach((element) => {
         this.makeElementDraggable(element);
-      }
-    });
+      });
   }
 
+  // Make an individual element draggable
   makeElementDraggable(element) {
-    element.addEventListener("mousedown", (e) =>
-      this.dragMouseDown(e, element)
-    );
-    element.addEventListener("touchstart", (e) =>
-      this.dragMouseDown(e, element)
-    );
+    element.addEventListener("mousedown", (e) => this.startDrag(e, element));
+    element.addEventListener("touchstart", (e) => this.startDrag(e, element));
   }
 
-  dragMouseDown(e, element) {
-    e.preventDefault();
-    if (!this.gameManager.isCurrentPlayerTurn(element)) {
-      return;
-    }
+
+  // Start dragging an element
+  startDrag(event, element) {
+    event.preventDefault();
+    if (!this.gameManager.isCurrentPlayerTurn(element.id) || element.classList.contains("non-draggable")) return;
 
     this.draggedElement = element;
-    const initialMousePos = e.touches
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : { x: e.clientX, y: e.clientY };
+    const initialMousePos = this.getEventPosition(event);
 
-    const onMouseMove = (e) => this.elementDrag(e, element, initialMousePos);
-    const onMouseUp = () =>
-      this.closeDragElement(element, onMouseMove, onMouseUp);
+    const moveHandler = (e) => this.drag(e, element, initialMousePos);
+    const endHandler = () => this.endDrag(element, moveHandler, endHandler);
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("touchmove", onMouseMove, { passive: false });
-    document.addEventListener("mouseup", onMouseUp);
-    document.addEventListener("touchend", onMouseUp, { passive: false });
+    document.addEventListener("mousemove", moveHandler);
+    document.addEventListener("touchmove", moveHandler, { passive: false });
+    document.addEventListener("mouseup", endHandler);
+    document.addEventListener("touchend", endHandler);
 
-    this.currentZIndex++;
-    element.style.zIndex = this.currentZIndex;
+    element.style.zIndex = ++this.zIndexCounter;
   }
 
-  elementDrag(e, element, initialMousePos) {
-    e.preventDefault();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const deltaX = clientX - initialMousePos.x;
-    const deltaY = clientY - initialMousePos.y;
+  // Handle the dragging of an element
+  drag(event, element, initialMousePos) {
+    event.preventDefault();
+    const currentMousePos = this.getEventPosition(event);
+    const deltaX = currentMousePos.x - initialMousePos.x;
+    const deltaY = currentMousePos.y - initialMousePos.y;
     element.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
     this.showOverlapPreview(element);
   }
 
-  closeDragElement(element, onMouseMove, onMouseUp) {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("touchmove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
-    document.removeEventListener("touchend", onMouseUp);
+  // End the dragging of an element
+  endDrag(element, moveHandler, endHandler) {
+    document.removeEventListener("mousemove", moveHandler);
+    document.removeEventListener("touchmove", moveHandler);
+    document.removeEventListener("mouseup", endHandler);
+    document.removeEventListener("touchend", endHandler);
 
-    const transformValues = element.style.transform.match(
-      /translate\(([^px]*)px, ([^px]*)px\)/
-    );
-    const deltaX = parseInt(transformValues[1], 10);
-    const deltaY = parseInt(transformValues[2], 10);
-
+    const [deltaX, deltaY] = this.getElementTranslation(element);
     const changesCommitted = this.commitChangesOnOverlap(element);
+
     if (changesCommitted) {
-      this.uiManager.updatePosition(element, deltaX, deltaY);
-      this.uiManager.updateAllImages();
+      this.uiManager.updateHandPosition(element, deltaX, deltaY);
+      this.uiManager.updateAllHands();
     } else {
       element.style.transform = "none";
     }
@@ -89,327 +86,67 @@ class DraggableManager {
     this.draggedElement = null;
   }
 
-  isSameSide(sourceId, targetId) {
-    return (
-      (sourceId.startsWith("top") && targetId.startsWith("top")) ||
-      (sourceId.startsWith("bottom") && targetId.startsWith("bottom"))
-    );
+  // Get the position of the event (mouse or touch)
+  getEventPosition(event) {
+    return event.touches
+      ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+      : { x: event.clientX, y: event.clientY };
   }
 
-  showOverlapPreview(element) {
-    const otherElements = document.querySelectorAll(".draggable");
-    let isOverlappingAny = false;
+  // Get the translation values of the element
+  getElementTranslation(element) {
+    const transform = element.style.transform;
+    const match = transform.match(/translate\((\d+)px,\s*(\d+)px\)/);
+    return match ? [parseInt(match[1], 10), parseInt(match[2], 10)] : [0, 0];
+  }
 
-    otherElements.forEach((otherElement) => {
+  // Show a preview if the dragged element overlaps with another element
+  showOverlapPreview(element) {
+    let isOverlapping = false;
+    document.querySelectorAll(".draggable").forEach((otherElement) => {
       if (
         otherElement !== element &&
-        this.uiManager.isOverlapping(element, otherElement)
+        this.isOverlapping(element, otherElement) &&
+        //check if other element is equal to 0
+        this.gameManager.getHandValue(otherElement.id) !== 0 &&
+        //check if the two hands are on the same player
+        this.gameManager.parseHandId(element.id)[0] !==
+          this.gameManager.parseHandId(otherElement.id)[0]
+
       ) {
-        isOverlappingAny = true;
+        isOverlapping = true;
         const sum = this.gameManager.calculateSum(element.id, otherElement.id);
-        this.uiManager.updatePreview(otherElement, sum);
+        this.uiManager.updateHandPreview(otherElement, sum);
       } else {
-        this.uiManager.revertPreview(otherElement);
+        this.uiManager.revertHandPreview(otherElement);
       }
     });
 
-    if (!isOverlappingAny) {
+    if (!isOverlapping) {
       this.uiManager.revertAllPreviews();
     }
   }
 
+  // Commit changes if the dragged element overlaps with another element
   commitChangesOnOverlap(element) {
     let changeCommitted = false;
-    const otherElements = document.querySelectorAll(".draggable");
-    otherElements.forEach((otherElement) => {
+    document.querySelectorAll(".draggable").forEach((otherElement) => {
       if (
         otherElement !== element &&
-        this.uiManager.isOverlapping(element, otherElement)
+        this.isOverlapping(element, otherElement)
       ) {
-        const currentMove = new MoveAdd(
-          element.id,
-          otherElement.id,
-          this.gameManager.getValueById(element.id),
-          this.gameManager.getValueById(otherElement.id)
-        );
-
-        if (currentMove.isValid()) {
-          currentMove.execute(this.gameManager);
+        const move = new MoveAdd(this.gameManager, element.id, otherElement.id);
+        if (move.isValid()) {
+          this.gameManager.executeMove(move);
           changeCommitted = true;
           this.uiManager.clearPreviews();
         }
       }
     });
-    this.uiManager.updateAllImages();
     return changeCommitted;
   }
-}
 
-class GameManager {
-  constructor() {
-    this.gameState = {
-      player1: { left: 1, right: 1 },
-      player2: { left: 1, right: 1 },
-      currentPlayer: "player2",
-      gameFinished: false,
-    };
-    this.draggableManager = null;
-    this.uiManager = null;
-  }
-
-  setManagers(draggableManager, uiManager) {
-    this.draggableManager = draggableManager;
-    this.uiManager = uiManager;
-  }
-
-  getValueById(id) {
-    switch (id) {
-      case "topLeft":
-        return this.gameState.player1.left;
-      case "topRight":
-        return this.gameState.player1.right;
-      case "bottomLeft":
-        return this.gameState.player2.left;
-      case "bottomRight":
-        return this.gameState.player2.right;
-      default:
-        return null;
-    }
-  }
-
-  updateValueById(id, value) {
-    switch (id) {
-      case "topLeft":
-        this.gameState.player1.left = value;
-        break;
-      case "topRight":
-        this.gameState.player1.right = value;
-        break;
-      case "bottomLeft":
-        this.gameState.player2.left = value;
-        break;
-      case "bottomRight":
-        this.gameState.player2.right = value;
-        break;
-    }
-  }
-
-  resetGame() {
-    this.gameState = {
-      player1: { left: 1, right: 1 },
-      player2: { left: 1, right: 1 },
-      currentPlayer: "player2",
-      gameFinished: false,
-    };
-    this.uiManager.resetUI();
-  }
-
-  checkGameEnd() {
-    if (
-      this.gameState.player1.left === 0 &&
-      this.gameState.player1.right === 0
-    ) {
-      this.gameState.gameFinished = true;
-      this.uiManager.showPopup("You win!");
-    } else if (
-      this.gameState.player2.left === 0 &&
-      this.gameState.player2.right === 0
-    ) {
-      this.gameState.gameFinished = true;
-      this.uiManager.showPopup("Computer wins!");
-    }
-  }
-
-  getCurrentPlayer() {
-    return this.gameState.currentPlayer;
-  }
-
-  getCurrentPlayerHands() {
-    return [
-      this.gameState[this.gameState.currentPlayer].left,
-      this.gameState[this.gameState.currentPlayer].right,
-    ];
-  }
-
-  setCurrentPlayerHands(left, right) {
-    this.gameState[this.gameState.currentPlayer].left = left;
-    this.gameState[this.gameState.currentPlayer].right = right;
-    this.uiManager.updateAllImages();
-    this.switchTurn();
-  }
-
-  switchTurn() {
-    this.gameState.currentPlayer =
-    this.gameState.currentPlayer === "player1" ? "player2" : "player1";
-    this.uiManager.updateUI();
-  }
-
-  calculateSum(id1, id2) {
-    const value1 = this.getValueById(id1);
-    const value2 = this.getValueById(id2);
-    return !isNaN(value1) && !isNaN(value2) ? value1 + value2 : null;
-  }
-
-  isCurrentPlayerTurn(element) {
-    const currentPlayer = this.getCurrentPlayer();
-    if (currentPlayer === "player1") {
-      return element.id === "topLeft" || element.id === "topRight";
-    } else {
-      return element.id === "bottomLeft" || element.id === "bottomRight";
-    }
-  }
-}
-
-class UIManager {
-  constructor(gameManager) {
-    this.gameManager = gameManager;
-    this.popupContainer = document.getElementById("popupContainer");
-    this.winnerMessage = document.getElementById("winnerMessage");
-    this.restartButton = document.getElementById("restartButton");
-    this.splitButton = document.getElementById("splitButton");
-    this.splitContainer = document.getElementById("splitContainer");
-    this.splitCloseButton = document.getElementById("closeSplit");
-    this.previewElements = new Map();
-    this.updateUI();
-
-    this.restartButton.addEventListener("click", () => {
-      this.gameManager.resetGame();
-      this.hidePopup();
-    });
-
-    this.splitButton.addEventListener("click", () => {
-      this.splitContainer.style.display = "flex";
-      this.showSplits();
-    });
-
-    this.splitCloseButton.addEventListener("click", () => {
-      this.splitContainer.style.display = "none";
-      this.splitButton.style.display = "flex";
-    });
-  }
-
-  updateUI() {
-    const currentPlayer = this.gameManager.getCurrentPlayer();
-    const computerHeader = document.getElementById('computer');
-    const playerHeader = document.getElementById('player');
-
-    // Remove active class from all headers
-    computerHeader.classList.remove('active-player');
-    playerHeader.classList.remove('active-player');
-
-    // Add active class to current player's header
-    if (currentPlayer === 'player1') {
-      computerHeader.classList.add('active-player');
-    } else if (currentPlayer === 'player2') {
-      playerHeader.classList.add('active-player');
-    }
-  }
-
-  showSplits() {
-    const newMove = new MoveSplit(this.gameManager);
-    const validDistributions = newMove.getAllValidDistributions();
-    const splitOptions = document.getElementById("splitOptions");
-    splitOptions.innerHTML = "";
-  
-    for (let i = 0; i < validDistributions.length; i++) {
-
-      const [bag1, bag2] = validDistributions[i];
-      const button = document.createElement("button");
-      button.classList.add("split-option");
-
-      // Create an <img> tag for each hand gesture image
-      const img1 = document.createElement("img");
-      img1.src = `img/${bag1}.png`; // Replace with actual path
-      img1.alt = `Hand ${bag1}`;
-      button.appendChild(img1);
-
-      const img2 = document.createElement("img");
-      img2.src = `img/${bag2}.png`; // Replace with actual path
-      img2.alt = `Hand ${bag2}`;
-      button.appendChild(img2);
-
-      button.addEventListener("click", () => this.handleSplitClick(bag1, bag2));
-      splitOptions.appendChild(button);
-    }
-  }
-
-  handleSplitClick(bag1, bag2) {
-    console.log(bag1, bag2);
-
-    //update the current players hands with the new values
-    this.gameManager.setCurrentPlayerHands(bag1, bag2);
-    this.splitContainer.style.display = "none";
-
-  }
-
-  moveElement(source, target) {
-    // Get the position of the target element
-    const targetRect = target.getBoundingClientRect();
-  
-    // Get the offset of the container to account for positioning within it
-    const containerRect = target.parentNode.getBoundingClientRect();
-  
-    // Calculate the new position of the source element relative to the container
-    const newLeft = targetRect.left - containerRect.left;
-    const newTop = targetRect.top - containerRect.top;
-  
-    // Apply the transform property to smoothly move the source element
-    source.style.transform = `translate(${newLeft}px, ${newTop}px)`;
-  }
-  
-
-  showPopup(message) {
-    this.winnerMessage.textContent = message;
-    this.popupContainer.style.display = "flex";
-  }
-
-  hidePopup() {
-    this.popupContainer.style.display = "none";
-  }
-
-  updateAllImages() {
-    this.updateElementUI("topLeft");
-    this.updateElementUI("topRight");
-    this.updateElementUI("bottomLeft");
-    this.updateElementUI("bottomRight");
-  }
-
-  updateElementUI(id) {
-    const element = document.getElementById(id).querySelector("img");
-    const value = this.gameManager.getValueById(id);
-    this.updateElementImage(element, value);
-  }
-
-  updateElementImage(element, value) {
-    element.src = `img/${value}.png`;
-  }
-
-  resetUI() {
-    this.updateAllImages();
-    this.resetElementPosition("topLeft");
-    this.resetElementPosition("topRight");
-    this.resetElementPosition("bottomLeft");
-    this.resetElementPosition("bottomRight");
-  }
-
-  resetElementPosition(id) {
-    const element = document.getElementById(id);
-    element.style.left = "";
-    element.style.top = "";
-    element.style.transform = "none";
-  }
-
-  getElementPosition(element) {
-    const rect = element.getBoundingClientRect();
-    return { x: rect.left + window.scrollX, y: rect.top + window.scrollY };
-  }
-
-  updatePosition(element, deltaX, deltaY) {
-    element.style.left = `${element.offsetLeft + deltaX}px`;
-    element.style.top = `${element.offsetTop + deltaY}px`;
-    element.style.transform = "none";
-  }
-
+  // Check if two elements are overlapping
   isOverlapping(el1, el2) {
     const rect1 = el1.getBoundingClientRect();
     const rect2 = el2.getBoundingClientRect();
@@ -420,123 +157,442 @@ class UIManager {
       rect1.top > rect2.bottom
     );
   }
+}
 
-  updatePreview(element, sum) {
+class GameState {
+  constructor() {
+    this.players = {
+      player1: { leftHand: 1, rightHand: 1 },
+      player2: { leftHand: 1, rightHand: 1 },
+    };
+    this.currentPlayer = "player2";
+    this.isGameOver = false;
+  }
+
+  getCurrentPlayer() {
+    return this.currentPlayer;
+  }
+
+  // Get the value of a specific hand for a player
+  getHandValue(playerId, hand) {
+    return this.players[playerId][hand];
+  }
+
+  // Set the value of a specific hand for a player
+  setHandValue(playerId, hand, value) {
+    this.players[playerId][hand] = value;
+  }
+
+  // Switch the current player's turn
+  switchTurn() {
+    this.currentPlayer =
+      this.currentPlayer === "player1" ? "player2" : "player1";
+  }
+
+  // Reset the game state
+  reset() {
+    this.players.player1 = { leftHand: 1, rightHand: 1 };
+    this.players.player2 = { leftHand: 1, rightHand: 1 };
+    this.currentPlayer = "player2";
+    this.isGameOver = false;
+  }
+}
+
+class GameManager {
+  constructor() {
+    this.gameState = new GameState();
+    this.uiManager = null;
+    this.draggableManager = null;
+  }
+
+  // Set the UIManager instance
+  setUIManager(uiManager) {
+    this.uiManager = uiManager;
+  }
+
+  // Set the DraggableManager instance
+  setDraggableManager(draggableManager) {
+    this.draggableManager = draggableManager;
+  }
+
+  // Initialize the game
+  initializeGame() {
+    if (this.uiManager) {
+      this.uiManager.updateAllHands();
+      this.uiManager.updateTurnIndicator();
+    }
+  }
+
+  // Get the value of a hand by its ID
+  getHandValue(handId) {
+    const [playerId, hand] = this.parseHandId(handId);
+    return this.gameState.getHandValue(playerId, hand);
+  }
+
+  // Set the value of a hand by its ID
+  setHandValue(handId, value) {
+    const [playerId, hand] = this.parseHandId(handId);
+    this.gameState.setHandValue(playerId, hand, value);
+  
+    // If the value is 0, make the hand non-draggable
+    const handElement = document.getElementById(handId);
+    if (value === 0) {
+      handElement.classList.add("non-draggable");
+    } else {
+      handElement.classList.remove("non-draggable");
+    }
+  }
+
+  // Parse the hand ID into player ID and hand
+  parseHandId(handId) {
+    // Define the regex to match and capture the player and hand parts
+    const regex = /^(top|bottom)(Left|Right)$/;
+    const match = handId.match(regex);
+
+    // Check if the match was successful and extract the parts
+    if (match) {
+      const playerPart = match[1]; // "top" or "bottom"
+      const handPart = match[2]; // "Left" or "Right"
+      const playerMap = { top: "player1", bottom: "player2" };
+      const handMap = { Left: "leftHand", Right: "rightHand" };
+      const playerId = playerMap[playerPart];
+      const hand = handMap[handPart];
+      return [playerId, hand];
+    } else {
+      // Handle the case where the handId format is not as expected
+      return [undefined, undefined];
+    }
+  }
+
+  // Check if it is the current player's turn for a given hand
+  isCurrentPlayerTurn(handId) {
+    const [playerId] = this.parseHandId(handId);
+    return playerId === this.gameState.currentPlayer;
+  }
+
+  // Check if the game has ended
+  checkGameEnd() {
+    const isPlayer1Defeated = this.isPlayerDefeated("player1");
+    const isPlayer2Defeated = this.isPlayerDefeated("player2");
+
+    if (isPlayer1Defeated || isPlayer2Defeated) {
+      this.gameState.isGameOver = true;
+      const winner = isPlayer1Defeated ? "You" : "Computer";
+      this.uiManager.showGameOverPopup(`${winner} win!`);
+      return true;
+    }
+    return false;
+  }
+
+  // Check if a player is defeated
+  isPlayerDefeated(playerId) {
+    return (
+      this.gameState.getHandValue(playerId, "leftHand") === 0 &&
+      this.gameState.getHandValue(playerId, "rightHand") === 0
+    );
+  }
+
+  // Reset the game
+  resetGame() {
+    this.gameState.reset();
+    this.uiManager.resetUI();
+  }
+
+  // Switch the current player's turn
+  switchTurn() {
+    console.log("Switching turn");
+    this.gameState.switchTurn();
+    this.uiManager.updateTurnIndicator();
+    console.log(this.gameState.currentPlayer);
+  }
+
+  // Calculate the sum of two hands
+  calculateSum(handId1, handId2) {
+    const value1 = this.getHandValue(handId1);
+    const value2 = this.getHandValue(handId2);
+    return value1 + value2;
+  }
+
+  getAllValidDistributions() {
+    //get current players left hand value
+    const currentPlayer = this.gameState.getCurrentPlayer();
+    const leftHandId = currentPlayer === "player1" ? "topLeft" : "bottomLeft";
+    const rightHandId = currentPlayer === "player1" ? "topRight" : "bottomRight";
+    const currentLeft = this.getHandValue(leftHandId);
+    const currentRight = this.getHandValue(rightHandId);
+    const total = currentLeft + currentRight;
+    return this.generateDistributions(total).filter((distribution) =>
+      this.isNewDistribution(distribution, currentLeft, currentRight)
+    );
+
+  }
+
+  // Generate all possible distributions of a total value
+  generateDistributions(total) {
+    const distributions = [];
+    for (let i = 0; i <= 4; i++) {
+      for (let j = 0; j <= 4; j++) {
+        if (i + j === total) {
+          const pair = [i, j].sort(); // Sort the pair
+          if (
+            !distributions.some(
+              (existing) => existing[0] === pair[0] && existing[1] === pair[1]
+            )
+          ) {
+            distributions.push(pair);
+          }
+        }
+      }
+    }
+    return distributions;
+  }
+
+  // Check if a distribution is new
+  isNewDistribution(distribution, currentLeft, currentRight) {
+    const [newLeft, newRight] = distribution;
+    return (
+      !(newLeft === currentLeft && newRight === currentRight) &&
+      !(newLeft === currentRight && newRight === currentLeft)
+    );
+  }
+
+  // Execute a move if it is valid
+  executeMove(move) {
+    if (move.isValid()) {
+      move.execute();
+
+      if (!this.checkGameEnd()) {
+        this.switchTurn();
+        this.uiManager.updateAllHands();
+      }
+      this.uiManager.updateAllHands();
+    }
+  }
+}
+
+class UIManager {
+  constructor(gameManager) {
+    this.gameManager = gameManager;
+    this.popupElement = document.getElementById("popupContainer");
+    this.messageElement = document.getElementById("winnerMessage");
+    this.restartButton = document.getElementById("restartButton");
+    this.splitButton = document.getElementById("splitButton");
+    this.splitContainer = document.getElementById("splitContainer");
+    this.splitCloseButton = document.getElementById("closeSplit");
+    this.previewStates = new Map();
+
+    this.initializeEventListeners();
+  }
+
+  // Initialize event listeners for UI elements
+  initializeEventListeners() {
+    this.restartButton.addEventListener("click", () => {
+      this.gameManager.resetGame();
+      this.hidePopup();
+    });
+
+    this.splitButton.addEventListener("click", () => this.showSplitOptions());
+    this.splitCloseButton.addEventListener("click", () =>
+      this.hideSplitOptions()
+    );
+  }
+
+  // Update the turn indicator in the UI
+  updateTurnIndicator() {
+    const currentPlayer = this.gameManager.gameState.currentPlayer;
+    document
+      .getElementById("computer")
+      .classList.toggle("active-player", currentPlayer === "player1");
+    document
+      .getElementById("player")
+      .classList.toggle("active-player", currentPlayer === "player2");
+  }
+
+  // Show the game over popup with a message
+  showGameOverPopup(message) {
+    this.messageElement.textContent = message;
+    this.popupElement.style.display = "flex";
+  }
+
+  // Hide the game over popup
+  hidePopup() {
+    this.popupElement.style.display = "none";
+  }
+
+  // Update all hand images in the UI
+  updateAllHands() {
+    ["topLeft", "topRight", "bottomLeft", "bottomRight"].forEach((handId) => {
+      this.updateHandImage(handId);
+    });
+  }
+
+  // Update the image of a specific hand in the UI
+  updateHandImage(handId) {
+    const imgElement = document.getElementById(handId).querySelector("img");
+    const value = this.gameManager.getHandValue(handId);
+    imgElement.src = `img/${value}.png`;
+  }
+
+  // Reset the UI to its initial state
+  resetUI() {
+    this.updateAllHands();
+    ["topLeft", "topRight", "bottomLeft", "bottomRight"].forEach((handId) => {
+      this.resetHandPosition(handId); document.getElementById(handId).classList.remove("non-draggable");}
+    );
+  }
+
+  // Reset the position of a specific hand in the UI
+  resetHandPosition(handId) {
+    const element = document.getElementById(handId);
+    element.style.left = "";
+    element.style.top = "";
+    element.style.transform = "none";
+  }
+
+  // Show split options for the current player
+  showSplitOptions() {
+    const validDistributions = this.gameManager.getAllValidDistributions();
+    console.log(validDistributions);
+    const splitOptions = document.getElementById("splitOptions");
+    splitOptions.innerHTML = "";
+
+    validDistributions.forEach(([bag1, bag2]) => {
+      const button = document.createElement("button");
+      button.classList.add("split-option");
+
+      const img1 = document.createElement("img");
+      img1.src = `img/${bag1}.png`;
+      img1.alt = `Hand ${bag1}`;
+      button.appendChild(img1);
+
+      const img2 = document.createElement("img");
+      img2.src = `img/${bag2}.png`;
+      img2.alt = `Hand ${bag2}`;
+      button.appendChild(img2);
+
+      button.addEventListener("click", () => this.handleSplitClick(bag1, bag2));
+      splitOptions.appendChild(button);
+    });
+
+    this.splitContainer.style.display = "flex";
+  }
+
+  // Hide the split options
+  hideSplitOptions() {
+    this.splitContainer.style.display = "none";
+    this.splitButton.style.display = "flex";
+  }
+
+  // Handle a click on a split option
+  handleSplitClick(bag1, bag2) {
+    const moveSplit = new MoveSplit(this.gameManager, bag1, bag2);
+    if (moveSplit.isValid) {
+      console.log(bag1, bag2);
+      this.gameManager.executeMove(moveSplit);
+      this.hideSplitOptions();
+    }
+  }
+
+  // Update the position of a hand in the UI
+  updateHandPosition(element, deltaX, deltaY) {
+    element.style.left = `${element.offsetLeft + deltaX}px`;
+    element.style.top = `${element.offsetTop + deltaY}px`;
+    element.style.transform = "none";
+  }
+
+  // Update the hand preview during dragging
+  updateHandPreview(element, sum) {
     if (sum !== null) {
       const elementImg = element.querySelector("img");
-      if (!this.previewElements.has(elementImg)) {
-        this.previewElements.set(elementImg, elementImg.src);
+      if (!this.previewStates.has(elementImg)) {
+        this.previewStates.set(elementImg, elementImg.src);
       }
       elementImg.src = `img/${sum >= 5 ? 0 : sum}.png`;
     }
   }
 
-  revertPreview(element) {
+  // Revert the hand preview to its original state
+  revertHandPreview(element) {
     const elementImg = element.querySelector("img");
-    if (this.previewElements.has(elementImg)) {
-      elementImg.src = this.previewElements.get(elementImg);
-      this.previewElements.delete(elementImg);
+    if (this.previewStates.has(elementImg)) {
+      elementImg.src = this.previewStates.get(elementImg);
+      this.previewStates.delete(elementImg);
     }
   }
 
+  // Revert all previews to their original states
   revertAllPreviews() {
-    this.previewElements.forEach((originalSrc, img) => {
+    this.previewStates.forEach((originalSrc, img) => {
       img.src = originalSrc;
     });
     this.clearPreviews();
   }
 
+  // Clear all preview states
   clearPreviews() {
-    this.previewElements.clear();
+    this.previewStates.clear();
   }
 }
 
 class MoveAdd {
-  constructor(sourceId, targetId, sourceValue, targetValue) {
-    this.sourceId = sourceId;
-    this.targetId = targetId;
-    this.sourceValue = sourceValue;
-    this.targetValue = targetValue;
+  constructor(gameManager, sourceHandId, targetHandId) {
+    this.gameManager = gameManager;
+    this.sourceHandId = sourceHandId;
+    this.targetHandId = targetHandId;
   }
 
+  // Check if the move is valid
   isValid() {
-    // Check if source and target IDs belong to different players
-    const isDifferentPlayers =
-      (this.sourceId.startsWith("top") && this.targetId.startsWith("bottom")) ||
-      (this.sourceId.startsWith("bottom") && this.targetId.startsWith("top"));
+    const [sourcePlayerId] = this.gameManager.parseHandId(this.sourceHandId);
+    const [targetPlayerId] = this.gameManager.parseHandId(this.targetHandId);
+    const sourceValue = this.gameManager.getHandValue(this.sourceHandId);
+    const targetValue = this.gameManager.getHandValue(this.targetHandId);
 
-    // Check if source value is greater than 0 and target value is not 0
-    const isValidMove =
-      isDifferentPlayers && this.sourceValue > 0 && this.targetValue !== 0;
-
-    return isValidMove;
+    return (
+      sourcePlayerId !== targetPlayerId && sourceValue > 0 && targetValue !== 0
+    );
   }
 
-  execute(gameManager) {
-    const sum = this.sourceValue + this.targetValue;
-    gameManager.updateValueById(this.targetId, sum >= 5 ? 0 : sum);
-    gameManager.switchTurn();
-    gameManager.checkGameEnd();
+  // Execute the move
+  execute() {
+    const sourceValue = this.gameManager.getHandValue(this.sourceHandId);
+    const targetValue = this.gameManager.getHandValue(this.targetHandId);
+    const sum = sourceValue + targetValue;
+    this.gameManager.setHandValue(this.targetHandId, sum >= 5 ? 0 : sum);
   }
 }
 
 class MoveSplit {
-  constructor(gameManager) {
+  constructor(gameManager, newLeft, newRight) {
     this.gameManager = gameManager;
-    this.sourceValue = this.gameManager.getCurrentPlayerHands()[0];
-    this.targetValue = this.gameManager.getCurrentPlayerHands()[1];
-
+    this.newLeft = newLeft;
+    this.newRight = newRight;
   }
 
 
+  // Check if a split is valid
+  isValid() {
+    const validSplits = this.gameManager.getAllValidDistributions();
+    return (
+      validSplits.some(
+        (split) => split[0] === this.newLeft && split[1] === this.newRight
+      ) ||
+      validSplits.some(
+        (split) => split[0] === this.newRight && split[1] === this.newLeft
+      )
+    );
+  }
 
-  getAllValidDistributions() {
-    const validDistributions = [];
-    const totalValue = this.sourceValue + this.targetValue;
-
-    for (let bag1 = 0; bag1 <= 4; bag1++) {
-      for (let bag2 = 0; bag2 <= 4; bag2++) {
-        if (bag1 + bag2 === totalValue) {
-          validDistributions.push([bag1, bag2]);
-        }
-      }
+  // Execute a split
+  execute() {
+    if (this.isValid()) {
+      const currentPlayer = this.gameManager.gameState.getCurrentPlayer();
+      const leftHandId =
+        currentPlayer === "player1" ? "topLeft" : "bottomLeft";
+      const rightHandId =
+        currentPlayer === "player1" ? "topRight" : "bottomRight";
+      this.gameManager.setHandValue(leftHandId, this.newLeft);
+      this.gameManager.setHandValue(rightHandId, this.newRight);
     }
-
-    const filteredPairs = this.filterPairs(validDistributions);
-
-    return filteredPairs;
   }
-
-  filterPairs(pairs) {
-    const seen = new Set();
-    const result = [];
-
-    pairs.forEach((pair) => {
-      // Sort the pair to ensure [a, b] and [b, a] are treated the same
-      const sortedPair = pair.slice().sort();
-      const pairString = JSON.stringify(sortedPair);
-
-      if (!seen.has(pairString) && this.checkNewPair(pair)) {
-        seen.add(pairString);
-        result.push(pair);
-      }
-    });
-
-    return result;
-  }
-
-  checkNewPair(pair) {
-    const [val1, val2] = pair;
-    const sourceValue = this.sourceValue;
-    const targetValue = this.targetValue;
-    console.log(val1, val2, sourceValue, targetValue);
-
-    if ((val1 == sourceValue && val2 == targetValue) || (val1 == targetValue && val2 == sourceValue)) {
-      return false;
-    }
-    return true;
-  }
-  
-
-  execute(gameManager) {}
 }
