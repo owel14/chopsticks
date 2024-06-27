@@ -240,7 +240,8 @@ class GameManager {
 
   switchTurn() {
     this.gameState.currentPlayer =
-      this.gameState.currentPlayer === "player1" ? "player2" : "player1";
+    this.gameState.currentPlayer === "player1" ? "player2" : "player1";
+    this.uiManager.updateUI();
   }
 
   calculateSum(id1, id2) {
@@ -269,6 +270,7 @@ class UIManager {
     this.splitContainer = document.getElementById("splitContainer");
     this.splitCloseButton = document.getElementById("closeSplit");
     this.previewElements = new Map();
+    this.updateUI();
 
     this.restartButton.addEventListener("click", () => {
       this.gameManager.resetGame();
@@ -284,6 +286,23 @@ class UIManager {
       this.splitContainer.style.display = "none";
       this.splitButton.style.display = "flex";
     });
+  }
+
+  updateUI() {
+    const currentPlayer = this.gameManager.getCurrentPlayer();
+    const computerHeader = document.getElementById('computer');
+    const playerHeader = document.getElementById('player');
+
+    // Remove active class from all headers
+    computerHeader.classList.remove('active-player');
+    playerHeader.classList.remove('active-player');
+
+    // Add active class to current player's header
+    if (currentPlayer === 'player1') {
+      computerHeader.classList.add('active-player');
+    } else if (currentPlayer === 'player2') {
+      playerHeader.classList.add('active-player');
+    }
   }
 
   showSplits() {
