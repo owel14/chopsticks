@@ -227,3 +227,10 @@ body {
     padding-right: 20px;
     background-color: #A3EAAA;
 }
+
+.text {
+    height: 60px; /* Fixed height, adjust as necessary */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
