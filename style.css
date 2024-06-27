@@ -157,7 +157,7 @@ body {
 
 #closeSplit {
     position: absolute;
-    bottom: 20px; 
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
@@ -219,3 +219,18 @@ body {
 #splitButton:hover {
     background-color: #4681f4;
 }
+
+.active-player {
+    border-radius: 25px;
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: #A3EAAA;
+}
+
+.text {
+    height: 60px; /* Fixed height, adjust as necessary */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
