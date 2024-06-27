@@ -310,6 +310,22 @@ class UIManager {
 
   }
 
+  moveElement(source, target) {
+    // Get the position of the target element
+    const targetRect = target.getBoundingClientRect();
+  
+    // Get the offset of the container to account for positioning within it
+    const containerRect = target.parentNode.getBoundingClientRect();
+  
+    // Calculate the new position of the source element relative to the container
+    const newLeft = targetRect.left - containerRect.left;
+    const newTop = targetRect.top - containerRect.top;
+  
+    // Apply the transform property to smoothly move the source element
+    source.style.transform = `translate(${newLeft}px, ${newTop}px)`;
+  }
+  
+
   showPopup(message) {
     this.winnerMessage.textContent = message;
     this.popupContainer.style.display = "flex";

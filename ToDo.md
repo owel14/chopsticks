@@ -6,9 +6,9 @@
 
 4. create a game state that keeps track of the game (done)
 
-5. Allow splitting between own fingers
+5. Allow splitting between own fingers (done)
 
-6. Disallow repetitions/identical move  
+6. Disallow repetitions/identical move (done)  
 
 7. Add a bot
 
