@@ -35,11 +35,14 @@ class DraggableManager {
     element.addEventListener("touchstart", (e) => this.startDrag(e, element));
   }
 
-
   // Start dragging an element
   startDrag(event, element) {
     event.preventDefault();
-    if (!this.gameManager.isCurrentPlayerTurn(element.id) || element.classList.contains("non-draggable")) return;
+    if (
+      !this.gameManager.isCurrentPlayerTurn(element.id) ||
+      element.classList.contains("non-draggable")
+    )
+      return;
 
     this.draggedElement = element;
     const initialMousePos = this.getEventPosition(event);
@@ -112,7 +115,6 @@ class DraggableManager {
         //check if the two hands are on the same player
         this.gameManager.parseHandId(element.id)[0] !==
           this.gameManager.parseHandId(otherElement.id)[0]
-
       ) {
         isOverlapping = true;
         const sum = this.gameManager.calculateSum(element.id, otherElement.id);
@@ -165,12 +167,17 @@ class GameState {
       player1: { leftHand: 1, rightHand: 1 },
       player2: { leftHand: 1, rightHand: 1 },
     };
+    this.startingPlayer = "player2";
     this.currentPlayer = "player2";
     this.isGameOver = false;
   }
 
   getCurrentPlayer() {
     return this.currentPlayer;
+  }
+
+  switchStartingPlayer() {
+    this.startingPlayer = this.startingPlayer === "player1" ? "player2" : "player1";
   }
 
   // Get the value of a specific hand for a player
@@ -193,7 +200,7 @@ class GameState {
   reset() {
     this.players.player1 = { leftHand: 1, rightHand: 1 };
     this.players.player2 = { leftHand: 1, rightHand: 1 };
-    this.currentPlayer = "player2";
+    this.currentPlayer = this.startingPlayer;  
     this.isGameOver = false;
   }
 }
@@ -203,6 +210,7 @@ class GameManager {
     this.gameState = new GameState();
     this.uiManager = null;
     this.draggableManager = null;
+    this.bot = new randomComputerBot(this);
   }
 
   // Set the UIManager instance
@@ -219,7 +227,7 @@ class GameManager {
   initializeGame() {
     if (this.uiManager) {
       this.uiManager.updateAllHands();
-      this.uiManager.updateTurnIndicator();
+      this.gameState.reset();
     }
   }
 
@@ -233,7 +241,7 @@ class GameManager {
   setHandValue(handId, value) {
     const [playerId, hand] = this.parseHandId(handId);
     this.gameState.setHandValue(playerId, hand, value);
-  
+
     // If the value is 0, make the hand non-draggable
     const handElement = document.getElementById(handId);
     if (value === 0) {
@@ -294,10 +302,20 @@ class GameManager {
 
   // Reset the game
   resetGame() {
+    this.gameState.switchStartingPlayer();
     this.gameState.reset();
     this.uiManager.resetUI();
-  }
-
+    
+    // Clear any pending timeouts
+    if (this.computerMoveTimeout) {
+        clearTimeout(this.computerMoveTimeout);
+    }
+    
+    // Only run the computer bot if it's the computer's turn
+    if (this.gameState.currentPlayer === "player1") {
+        this.runComputerBot();
+    }
+}
   // Switch the current player's turn
   switchTurn() {
     console.log("Switching turn");
@@ -317,14 +335,14 @@ class GameManager {
     //get current players left hand value
     const currentPlayer = this.gameState.getCurrentPlayer();
     const leftHandId = currentPlayer === "player1" ? "topLeft" : "bottomLeft";
-    const rightHandId = currentPlayer === "player1" ? "topRight" : "bottomRight";
+    const rightHandId =
+      currentPlayer === "player1" ? "topRight" : "bottomRight";
     const currentLeft = this.getHandValue(leftHandId);
     const currentRight = this.getHandValue(rightHandId);
     const total = currentLeft + currentRight;
     return this.generateDistributions(total).filter((distribution) =>
       this.isNewDistribution(distribution, currentLeft, currentRight)
     );
-
   }
 
   // Generate all possible distributions of a total value
@@ -356,18 +374,34 @@ class GameManager {
     );
   }
 
+  //run the computer bot
+  runComputerBot() {
+    if (this.gameState.currentPlayer === "player1") {
+        // Store the timeout ID so we can clear it if needed
+        this.computerMoveTimeout = setTimeout(() => {
+            const bot = new randomComputerBot(this);
+            bot.performComputerMove();
+        }, 1000);
+    }
+}
+
   // Execute a move if it is valid
   executeMove(move) {
     if (move.isValid()) {
-      move.execute();
+        move.execute();
 
-      if (!this.checkGameEnd()) {
-        this.switchTurn();
+        if (!this.checkGameEnd()) {
+            this.switchTurn();
+            this.uiManager.updateAllHands();
+            
+            // Only run the computer bot if it's the computer's turn
+            if (this.gameState.currentPlayer === "player1") {
+                this.runComputerBot();
+            }
+        }
         this.uiManager.updateAllHands();
-      }
-      this.uiManager.updateAllHands();
     }
-  }
+}
 }
 
 class UIManager {
@@ -406,7 +440,12 @@ class UIManager {
     document
       .getElementById("player")
       .classList.toggle("active-player", currentPlayer === "player2");
+    
+    // Enable split button only for player2 (human player)
+    this.setSplitButtonState(currentPlayer === "player2");
   }
+
+  
 
   // Show the game over popup with a message
   showGameOverPopup(message) {
@@ -437,8 +476,10 @@ class UIManager {
   resetUI() {
     this.updateAllHands();
     ["topLeft", "topRight", "bottomLeft", "bottomRight"].forEach((handId) => {
-      this.resetHandPosition(handId); document.getElementById(handId).classList.remove("non-draggable");}
-    );
+      this.resetHandPosition(handId);
+      document.getElementById(handId).classList.remove("non-draggable");
+    });
+    this.updateTurnIndicator();
   }
 
   // Reset the position of a specific hand in the UI
@@ -447,6 +488,12 @@ class UIManager {
     element.style.left = "";
     element.style.top = "";
     element.style.transform = "none";
+  }
+
+  setSplitButtonState(enabled) {
+    this.splitButton.disabled = !enabled;
+    this.splitButton.style.opacity = enabled ? "1" : "0.5";
+    this.splitButton.style.cursor = enabled ? "pointer" : "not-allowed";
   }
 
   // Show split options for the current player
@@ -534,9 +581,23 @@ class UIManager {
   }
 }
 
-class MoveAdd {
-  constructor(gameManager, sourceHandId, targetHandId) {
+class Move {
+  constructor(gameManager) {
     this.gameManager = gameManager;
+  }
+
+  isValid() {
+    return true;
+  }
+
+  execute() {
+    return true;
+  }
+}
+
+class MoveAdd extends Move {
+  constructor(gameManager, sourceHandId, targetHandId) {
+    super(gameManager);
     this.sourceHandId = sourceHandId;
     this.targetHandId = targetHandId;
   }
@@ -562,13 +623,12 @@ class MoveAdd {
   }
 }
 
-class MoveSplit {
+class MoveSplit extends Move {
   constructor(gameManager, newLeft, newRight) {
-    this.gameManager = gameManager;
+    super(gameManager);
     this.newLeft = newLeft;
     this.newRight = newRight;
   }
-
 
   // Check if a split is valid
   isValid() {
@@ -587,12 +647,106 @@ class MoveSplit {
   execute() {
     if (this.isValid()) {
       const currentPlayer = this.gameManager.gameState.getCurrentPlayer();
-      const leftHandId =
-        currentPlayer === "player1" ? "topLeft" : "bottomLeft";
+      const leftHandId = currentPlayer === "player1" ? "topLeft" : "bottomLeft";
       const rightHandId =
         currentPlayer === "player1" ? "topRight" : "bottomRight";
       this.gameManager.setHandValue(leftHandId, this.newLeft);
       this.gameManager.setHandValue(rightHandId, this.newRight);
+    }
+  }
+}
+
+class computerBot {
+  constructor(gameManager) {
+    this.gameManager = gameManager;
+  }
+  performComputerMove() {}
+
+  performSplitMove() {}
+
+  performAddMove() {}
+
+  animateAddMove(sourceHand, targetHand, callback) {
+    const sourceElement = document.getElementById(sourceHand);
+    const targetClass =
+      targetHand === "bottomRight"
+        ? "move-towards-bottom-left"
+        : "move-towards-bottom-right";
+
+    sourceElement.classList.add(targetClass);
+
+    setTimeout(() => {
+      sourceElement.classList.remove(targetClass);
+      callback();
+    }, 500);
+  }
+
+  animateSplitMove(callback) {
+    const leftHand = document.getElementById("topLeft");
+    const rightHand = document.getElementById("topRight");
+
+    leftHand.classList.add("move-towards-center");
+    rightHand.classList.add("move-towards-center");
+
+    setTimeout(() => {
+      leftHand.classList.remove("move-towards-center");
+      rightHand.classList.remove("move-towards-center");
+      leftHand.classList.add("move-away-from-center");
+      rightHand.classList.add("move-away-from-center");
+
+      setTimeout(() => {
+        leftHand.classList.remove("move-away-from-center");
+        rightHand.classList.remove("move-away-from-center");
+        callback();
+      }, 500);
+    }, 500);
+  }
+}
+
+class randomComputerBot extends computerBot {
+  constructor(gameManager) {
+    super(gameManager);
+  }
+
+  // perform an add move for the computer from a random legal hand on computer side to another random legal hand on player side
+  performComputerMove() {
+    const random = Math.floor(Math.random() * 2);
+    if (random === 0) {
+      this.performSplitMove();
+    } else {
+      this.performAddMove();
+    }
+  }
+
+  performSplitMove() {
+    const validSplits = this.gameManager.getAllValidDistributions();
+    const split = validSplits[Math.floor(Math.random() * validSplits.length)];
+    if(validSplits.length === 0 && !this.gameManager.checkGameEnd()){
+      this.performAddMove();
+      return;
+    }
+    const move = new MoveSplit(this.gameManager, split[0], split[1]);
+    if (move.isValid() && !this.gameManager.checkGameEnd() && this.gameManager.gameState.currentPlayer === "player1"){
+      this.animateSplitMove(() => {
+        this.gameManager.executeMove(move);
+      });
+    } else if (!this.gameManager.checkGameEnd() && this.gameManager.gameState.currentPlayer === "player1") {
+      this.performAddMove();
+    }
+  }
+
+  performAddMove() {
+    const computerHands = ["topLeft", "topRight"];
+    const playerHands = ["bottomLeft", "bottomRight"];
+    const computerHand = computerHands[Math.floor(Math.random() * 2)];
+    const playerHand = playerHands[Math.floor(Math.random() * 2)];
+    const move = new MoveAdd(this.gameManager, computerHand, playerHand);
+    if (move.isValid() && !this.gameManager.checkGameEnd() && this.gameManager.gameState.currentPlayer === "player1"){
+      this.animateAddMove(computerHand, playerHand, () => {
+        this.gameManager.executeMove(move);
+      });
+    } else if (!this.gameManager.checkGameEnd() && this.gameManager.gameState.currentPlayer === "player1") {
+      this.performAddMove();
     }
   }
 }

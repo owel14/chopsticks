@@ -239,3 +239,23 @@ body {
   opacity: 0.5;
   cursor: default;
 }
+
+.hand {
+  transition: transform 0.5s ease-in-out;
+}
+
+.move-towards-bottom-left {
+  transform: translate(50px, 50px) !important;
+}
+
+.move-towards-bottom-right {
+  transform: translate(-50px, 50px) !important;
+}
+
+.move-towards-center {
+  transform: translate(0, -25px) !important;
+}
+
+.move-away-from-center {
+  transform: translate(0, 25px) !important;
+}
