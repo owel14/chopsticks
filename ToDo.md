@@ -10,6 +10,14 @@
 
 6. Disallow repetitions/identical move (done)  
 
-7. Add a bot
+7. Add a bot (done)
 
 8. Show a menu
+
+Issues
+
+1. On new screen top hands are transparent
+
+2. Menu is too small
+
+3. Split options is too small

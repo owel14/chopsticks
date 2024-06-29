@@ -11,8 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
     <script src="script.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script>
 </head>
 
 <!-- notes -->
@@ -61,6 +64,15 @@
 
     <div id="popupContainer" class="popup-container" display="none">
         <div class="popup">
+
+            <div class="difficulty">    
+                <h2>Difficulty</h2>
+                <select id="botType">
+                    <option value="easy">Easy</option>
+                    <option value="hard">Hard</option>
+                  </select>
+            </div>
+
             <h2 id="winnerMessage"></h2>
             <button id="restartButton">New   Game</button>
         </div>
@@ -74,6 +86,9 @@
             <button id="closeSplit">close</button>
         </div>
     </div>
+
+      <py-script src="ai_move.py"></py-script>
+
 </body>
 
 </html>
