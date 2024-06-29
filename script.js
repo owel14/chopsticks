@@ -833,7 +833,6 @@ class basicBot extends computerBot {
                   });
               }
           } else if (moveType === 'split') {
-              // Assuming 'source' represents the new left value and 'target' the new right value
               const splitMove = new MoveSplit(this.gameManager, hand1, hand2);
               if (splitMove.isValid() && !this.gameManager.checkGameEnd()) {
                   this.animateSplitMove(() => {
