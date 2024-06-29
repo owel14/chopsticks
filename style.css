@@ -92,19 +92,20 @@ body {
   z-index: 1000;
 }
 
-.popup {
+#gameModePopup.popup {
   background-color: white;
-  padding: 140px;
+  padding: 60px;
   border-radius: 20px;
   text-align: center;
   position: relative;
+  z-index: 1001;
 }
 
-.popup h2 {
+#gameModePopup.popup h2 {
   margin-bottom: 20px;
 }
 
-.popup button {
+#gameModePopup.popup button {
   position: absolute;
   bottom: 20px;
   left: 50%;
@@ -119,8 +120,105 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.popup button:hover {
+#gameModePopup.popup button:hover {
   background-color: #4681f4;
+}
+
+.difficulty {
+  display: flex;
+  justify-content: space-between; /* Align items to opposite ends */
+  align-items: center; /* Center items vertically */
+  padding: 10px; /* Adjust padding as needed */
+}
+
+#difficulty-header {
+  font-size: 18px;
+  margin: 10px;
+}
+
+#botType {
+  margin: 10px;
+}
+
+#popupHeader{
+  font-size: 20px;
+  margin: 10px;
+}
+
+#info-button {
+  position: absolute;
+  left: 50%;
+  margin-bottom: 180px;
+  margin-left: 140px;
+  padding: 10px 20px;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #55c2da;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  transition: background-color 0.3s ease;
+}
+
+#info-button:hover {
+  background-color: #4681f4;
+}
+
+.info-box {
+  display: none;
+  width: 300px;
+  position: absolute;
+  top: 0;
+  left: 100%; /* Position to the right of the #info-button */
+  margin-left: 10px;
+}
+
+/* CSS to show info-box when #info-button is hovered */
+#info-button:hover + .info-box {
+  display: block;
+  position: absolute;
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+#youWinPopup {
+  display: none;
+  position: fixed;
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  z-index: 1000;
+  position: fixed;
+}
+
+#youWinPopup.popup {
+  background-color: white;
+  padding: 120px;
+  border-radius: 20px;
+  text-align: center;
+  position: fixed;
+}
+
+#youWinPopup.popup h2 {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+#youWinPopup.popup button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #55c2da;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .split-container {
