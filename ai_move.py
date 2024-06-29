@@ -19,6 +19,9 @@ def calculate_move(player_states):
 
     # Hand states converts the json object to a arrays
     # hand_states will look something like [[1, 2], [3, 4]]
+    # The first array is the computer's hand values, the second array is the player's hand values
+    # For example [[1, 2], [3, 4]] means that the computer has a left hand value of 1 and a right hand value of 2
+    #  and the player has a left hand value of 3 and a right hand value of 4
     print(hand_states)
 
     # take the current state of the game and return the best possible move
