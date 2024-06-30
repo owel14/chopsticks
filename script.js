@@ -238,10 +238,11 @@ class GameManager {
     return false;
   }
 
-  resetGame() {
+  resetGame(difficulty) {
     this.gameState.switchStartingPlayer();
     this.gameState.reset();
     this.uiManager.resetUI();
+    this.setBotType(difficulty);
 
     if (this.computerMoveTimeout) {
       clearTimeout(this.computerMoveTimeout);
@@ -440,7 +441,12 @@ class UIManager {
     this.splitButton = document.getElementById("splitButton");
     this.splitContainer = document.getElementById("splitContainer");
     this.splitCloseButton = document.getElementById("closeSplit");
-    this.dropDown = document.getElementById("botType");
+    this.infobox = document.getElementById("info-box");
+    this.infoButton = document.getElementById("info-button");
+    this.closeInfo = document.getElementById("closeInfo");
+    this.winPopup = document.getElementById("youWinPopup");
+    this.winnerMessage = document.getElementById("winnerMessage");
+    this.playAgainButton = document.getElementById("playAgainButton");
     this.previewStates = new Map();
 
     this.initializeEventListeners();
@@ -449,7 +455,8 @@ class UIManager {
   // Initialize event listeners for UI elements
   initializeEventListeners() {
     this.restartButton.addEventListener("click", () => {
-      this.gameManager.resetGame();
+      const selectedDifficulty = document.querySelector('input[name="radDifficulty"]:checked');
+      this.gameManager.resetGame(selectedDifficulty.value);
       this.hidePopup();
     });
 
@@ -458,9 +465,26 @@ class UIManager {
       this.hideSplitOptions()
     );
 
-    this.dropDown.addEventListener("change", (e) => {
-      this.gameManager.setBotType(e.target.value);
+    this.infoButton.addEventListener("click", () => {
+      this.infobox.style.display = "flex";
+      this.popupElement.style.display = "none";
     });
+
+    this.closeInfo.addEventListener("click", () => {
+      this.infobox.style.display = "none";
+      this.popupElement.style.display = "flex";
+    });
+
+    this.playAgainButton.addEventListener("click", () => {
+
+      this.hideWinnerPopup();
+
+    });
+  }
+
+  hideWinnerPopup() {
+    this.winPopup.style.display = "none";
+    this.popupElement.style.display = "flex";
   }
 
   // Update the turn indicator in the UI
@@ -479,8 +503,8 @@ class UIManager {
 
   // Show the game over popup with a message
   showGameOverPopup(message) {
-    this.messageElement.textContent = message;
-    this.popupElement.style.display = "flex";
+    this.winnerMessage.textContent = message;
+    this.winPopup.style.display = "flex";
   }
 
   // Hide the game over popup

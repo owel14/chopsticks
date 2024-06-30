@@ -63,19 +63,43 @@
     </div>
 
     <div id="popupContainer" class="popup-container" display="none">
-        <div class="popup">
-
-            <div class="difficulty">    
-                <h2>Difficulty</h2>
-                <select id="botType">
-                    <option value="easy">Easy</option>
-                    <option value="hard">Hard</option>
-                  </select>
+        <div class="popup" id= 'gameModePopup'>
+            <h2 id="popupHeader">Select your game difficulty:</h2>
+            <div class="difficulty">
+                    <div id = 'difficulty-selection'>
+                        <label>
+                            <input type="radio" id="botType" name="radDifficulty" value="easy" checked> Easy
+                        </label>
+                        <label>
+                            <input type="radio" id="botType" name="radDifficulty" value="hard" > Hard
+                        </label>
+                    </div>
             </div>
-
-            <h2 id="winnerMessage"></h2>
-            <button id="restartButton">New   Game</button>
+            <button id="restartButton">New Game</button>
+            <div id="info" class="info">
+                <button id="info-button">i</button>
+            </div>
         </div>
+    </div>
+
+    <div id="info-box" class="info-box">
+        <div id="info-content" class = "info-content">
+            <h3>How to Play Chopsticks</h3>
+            <p><strong>Objective:</strong> Make your opponent's hands both "out."</p>
+            <p><strong>Setup:</strong> Each player starts with one finger up on each hand.</p>
+            <p><strong>On your turn, you can either:</strong></p>
+            <ul>
+                <li><strong>Attack</strong>: Tap one of your hands on an opponent's hand to add fingers. If the opponent's hand reaches 5 fingers, that hand is out.</li>
+                <li><strong>Split</strong>: Redistribute fingers between your hands.</li>
+            </ul>
+            <p><strong>Winning:</strong> You win if your opponent has both hands "out."</p>
+            <button id="closeInfo">Close</button>
+        </div>
+    </div>
+
+    <div class="popup" id="youWinPopup">
+        <h2 id="winnerMessage"></h2>
+        <button id="playAgainButton">Play Again</button>
     </div>
 
     <div id="splitContainer" class="split-container" style="display: none;">
