@@ -247,6 +247,7 @@ body {
 #youWinPopup {
   display: none;
   position: fixed;
+  flex-direction: column;
   top: 50%; /* Center vertically */
   left: 50%; /* Center horizontally */
   transform: translate(-50%, -50%);
@@ -260,14 +261,15 @@ body {
 
 #youWinPopup.popup {
   background-color: white;
-  padding: 120px;
+  border: black 1px solid;
+  padding: 40px;
   border-radius: 20px;
   text-align: center;
   position: fixed;
 }
 
 #youWinPopup.popup h2 {
-  margin-bottom: 20px;
+  margin-bottom: 40px;
   font-size: 18px;
 }
 
@@ -277,9 +279,11 @@ body {
   background-color: #55c2da;
   color: white;
   border: none;
+  margin-top: auto;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  margin-bottom: 0px;
 }
 
 .split-container {
