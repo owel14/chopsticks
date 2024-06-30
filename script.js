@@ -441,6 +441,9 @@ class UIManager {
     this.splitContainer = document.getElementById("splitContainer");
     this.splitCloseButton = document.getElementById("closeSplit");
     this.dropDown = document.getElementById("botType");
+    this.infobox = document.getElementById("info-box");
+    this.infoButton = document.getElementById("info-button");
+    this.closeInfo = document.getElementById("closeInfo");
     this.previewStates = new Map();
 
     this.initializeEventListeners();
@@ -460,6 +463,16 @@ class UIManager {
 
     this.dropDown.addEventListener("change", (e) => {
       this.gameManager.setBotType(e.target.value);
+    });
+
+    this.infoButton.addEventListener("click", () => {
+      this.infobox.style.display = "flex";
+      this.popupElement.style.display = "none";
+    });
+
+    this.closeInfo.addEventListener("click", () => {
+      this.infobox.style.display = "none";
+      this.popupElement.style.display = "flex";
     });
   }
 
