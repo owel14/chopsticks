@@ -321,7 +321,7 @@ class DraggableManager {
   // Initialize all draggable elements by making them draggable
   initializeDraggableElements() {
     document
-      .querySelectorAll(".draggable:not(.non-draggable)")
+      .querySelectorAll(".draggable:not(.computer)")
       .forEach((element) => {
         this.makeElementDraggable(element);
       });
