@@ -109,8 +109,8 @@ class HandManager {
 
   getAllValidDistributions(stateSnapeShot) {
     const currentPlayer = this.gameState.getCurrentPlayer();
-      const currentLeft = stateSnapeShot[currentPlayer].leftHand;
-      const currentRight = stateSnapeShot[currentPlayer].rightHand;
+    const currentLeft = stateSnapeShot[currentPlayer].leftHand;
+    const currentRight = stateSnapeShot[currentPlayer].rightHand;
 
     const total = currentLeft + currentRight;
     return this.generateDistributions(total).filter((distribution) =>
@@ -200,7 +200,7 @@ class GameManager {
   setPreviewSplit(previewSplit) {
     const [hand1, hand2] = previewSplit.getHands();
 
-    if(previewSplit.isValid()){
+    if (previewSplit.isValid()) {
       this.previewSplit = previewSplit;
       this.uiManager.setSplitButtonState(true);
     } else {
@@ -210,7 +210,6 @@ class GameManager {
     this.setHandValue("bottomLeft", hand1);
     this.setHandValue("bottomRight", hand2);
     this.uiManager.updateAllHands();
-
   }
 
   setBotType(botType) {
@@ -417,8 +416,7 @@ class DraggableManager {
         //check if the two hands are on the same player
         this.gameManager.handManager.parseHandId(element.id)[0] !==
           this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
-        
-          this.gameManager.previewSplit === null
+        this.gameManager.previewSplit === null
       ) {
         // then
         isOverlapping = true;
@@ -455,7 +453,7 @@ class DraggableManager {
         this.isOverlapping(element, otherElement) &&
         this.gameManager.handManager.parseHandId(element.id)[0] !==
           this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
-          this.gameManager.previewSplit === null
+        this.gameManager.previewSplit === null
       ) {
         const move = new MoveAdd(this.gameManager, element.id, otherElement.id);
         if (move.isValid()) {
@@ -647,22 +645,25 @@ class UIManager {
         this.previewStates.set(elementImg, elementImg.src);
       }
       elementImg.src = `img/${sum >= 5 ? 0 : sum}.png`;
-    }
-  }
+      console.log(sum);
 
-  // Revert the hand preview to its original state
-  revertHandPreview(element) {
-    const elementImg = element.querySelector("img");
-    if (this.previewStates.has(elementImg)) {
-      elementImg.src = this.previewStates.get(elementImg);
-      this.previewStates.delete(elementImg);
+      if (sum >= 5 || sum === 0) {
+        console.log("sum is 0 or 5");
+        element.classList.add("non-draggable");
+      } else {
+        element.classList.remove("non-draggable");
+      }
     }
   }
 
   // Revert all previews to their original states
   revertAllPreviews() {
     this.previewStates.forEach((originalSrc, img) => {
-      img.src = originalSrc;
+      // if the hand is not 0 or 5, remove the non-draggable class
+      if (parseInt(img.src.split("/")[1].split(".")[0]) !== 0) {
+        img.parentElement.classList.remove("non-draggable");
+        img.src = originalSrc;
+      }
     });
     this.clearPreviews();
   }
