@@ -433,7 +433,7 @@ body {
   .draggable {
     width: 60px;
     height: auto;
-    margin: 20px; /* Ensure margins do not cause overflow */
+    margin: 50px; /* Ensure margins do not cause overflow */
   }
 
   header {
@@ -447,18 +447,9 @@ body {
   }
 
   #splitButton {
-    position: absolute;
-    left: 0%;
-    bottom: 35px;
-    transform: translateX(calc(-50% + 30px)) translateY(10px); /* Adjust X and Y values */
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #55c2da;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    left: calc(85% - 100vw - 10px);
+    margin-top: 100px;
+    margin-bottom: 35px;
   }
 
   .info-box {
@@ -492,6 +483,16 @@ body {
     position: fixed;
   }
 
+  #player{
+    margin-top: 200px;
+    margin-bottom: 120px;
+  }
+
+  #computer{
+    margin-top: 120px;
+    margin-bottom: 200px;
+  }
+
 }
 
 @media only screen and (max-width: 360px) {
@@ -504,7 +505,7 @@ body {
   .draggable {
     width: 60px;
     height: auto;
-    margin: 10px; /* Ensure margins do not cause overflow */
+    margin: 50px; /* Ensure margins do not cause overflow */
   }
 
   header {
@@ -522,7 +523,7 @@ body {
   }
 
   #splitButton {
-    transform: translate(-80px, -20px);
+    left: calc(50% - 100vw - 10px);
     margin-bottom: 35px;
   }
 
