@@ -107,13 +107,11 @@ class HandManager {
     return value1 + value2;
   }
 
-  getAllValidDistributions() {
+  getAllValidDistributions(stateSnapeShot) {
     const currentPlayer = this.gameState.getCurrentPlayer();
-    const leftHandId = currentPlayer === "player1" ? "topLeft" : "bottomLeft";
-    const rightHandId =
-      currentPlayer === "player1" ? "topRight" : "bottomRight";
-    const currentLeft = this.getHandValue(leftHandId);
-    const currentRight = this.getHandValue(rightHandId);
+    const currentLeft = stateSnapeShot[currentPlayer].leftHand;
+    const currentRight = stateSnapeShot[currentPlayer].rightHand;
+
     const total = currentLeft + currentRight;
     return this.generateDistributions(total).filter((distribution) =>
       this.isNewDistribution(distribution, currentLeft, currentRight)
@@ -187,10 +185,31 @@ class GameManager {
     this.uiManager = null;
     this.draggableManager = null;
     this.computerMoveTimeout = null;
+    this.previewSplit = null;
+    this.stateSnapeShot = null;
+  }
+
+  setStateSnapeShot() {
+    this.stateSnapeShot = this.gameState.getStateSnapshot();
   }
 
   setUIManager(uiManager) {
     this.uiManager = uiManager;
+  }
+
+  setPreviewSplit(previewSplit) {
+    const [hand1, hand2] = previewSplit.getHands();
+
+    if (previewSplit.isValid()) {
+      this.previewSplit = previewSplit;
+      this.uiManager.setSplitButtonState(true);
+    } else {
+      this.previewSplit = null;
+      this.uiManager.setSplitButtonState(false);
+    }
+    this.setHandValue("bottomLeft", hand1);
+    this.setHandValue("bottomRight", hand2);
+    this.uiManager.updateAllHands();
   }
 
   setBotType(botType) {
@@ -203,6 +222,7 @@ class GameManager {
 
   initializeGame() {
     if (this.uiManager) {
+      this.stateSnapeShot = this.gameState.getStateSnapshot();
       this.uiManager.updateAllHands();
       this.gameState.reset();
       this.botManager.setBot();
@@ -251,6 +271,9 @@ class GameManager {
     if (this.gameState.getCurrentPlayer() === "player1") {
       this.botManager.runComputerBot();
     }
+
+    this.setStateSnapeShot();
+    this.uiManager.setSplitButtonState(false);
   }
 
   switchTurn() {
@@ -263,7 +286,7 @@ class GameManager {
   }
 
   getAllValidDistributions() {
-    return this.handManager.getAllValidDistributions();
+    return this.handManager.getAllValidDistributions(this.stateSnapeShot);
   }
 
   executeMove(move) {
@@ -278,6 +301,10 @@ class GameManager {
       }
       this.uiManager.updateAllHands();
     }
+
+    this.previewSplit = null;
+    this.setStateSnapeShot();
+    this.uiManager.setSplitButtonState(false);
   }
 }
 
@@ -294,7 +321,7 @@ class DraggableManager {
   // Initialize all draggable elements by making them draggable
   initializeDraggableElements() {
     document
-      .querySelectorAll(".draggable:not(.non-draggable)")
+      .querySelectorAll(".draggable:not(.computer)")
       .forEach((element) => {
         this.makeElementDraggable(element);
       });
@@ -377,21 +404,41 @@ class DraggableManager {
   // Show a preview if the dragged element overlaps with another element
   showOverlapPreview(element) {
     let isOverlapping = false;
+
     document.querySelectorAll(".draggable").forEach((otherElement) => {
       if (
+        //not the same element
         otherElement !== element &&
+        //if they are overlapping
         this.isOverlapping(element, otherElement) &&
-        //check if other element is equal to 0
+        // if the other hand is not equal to 0
         this.gameManager.getHandValue(otherElement.id) !== 0 &&
         //check if the two hands are on the same player
         this.gameManager.handManager.parseHandId(element.id)[0] !==
-          this.gameManager.handManager.parseHandId(otherElement.id)[0]
+          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
+        this.gameManager.previewSplit === null
       ) {
+        // then
         isOverlapping = true;
         const sum = this.gameManager.calculateSum(element.id, otherElement.id);
         this.uiManager.updateHandPreview(otherElement, sum);
-      } else {
-        this.uiManager.revertHandPreview(otherElement);
+      } else if (
+        otherElement !== element &&
+        this.isOverlapping(element, otherElement) &&
+        this.gameManager.handManager.parseHandId(element.id)[0] ===
+          this.gameManager.handManager.parseHandId(otherElement.id)[0]
+          && this.gameManager.getHandValue(
+            otherElement.id
+      ) !== 4)
+      {
+        isOverlapping = true;
+        const elementValue = this.gameManager.getHandValue(element.id);
+        const otherElementValue = this.gameManager.getHandValue(
+          otherElement.id
+        );
+
+        this.uiManager.updateHandPreview(element, elementValue - 1);
+        this.uiManager.updateHandPreview(otherElement, otherElementValue + 1);
       }
     });
 
@@ -406,7 +453,10 @@ class DraggableManager {
     document.querySelectorAll(".draggable").forEach((otherElement) => {
       if (
         otherElement !== element &&
-        this.isOverlapping(element, otherElement)
+        this.isOverlapping(element, otherElement) &&
+        this.gameManager.handManager.parseHandId(element.id)[0] !==
+          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
+        this.gameManager.previewSplit === null
       ) {
         const move = new MoveAdd(this.gameManager, element.id, otherElement.id);
         if (move.isValid()) {
@@ -414,6 +464,38 @@ class DraggableManager {
           changeCommitted = true;
           this.uiManager.clearPreviews();
         }
+      } else if (
+        otherElement !== element &&
+        this.isOverlapping(element, otherElement) &&
+        this.gameManager.handManager.parseHandId(element.id)[0] ===
+          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
+        this.gameManager.getHandValue(otherElement.id) !== 4
+      ) {
+        let split = null;
+        const elementValue = this.gameManager.getHandValue(element.id);
+        const otherElementValue = this.gameManager.getHandValue(
+          otherElement.id
+        );
+        if (
+          this.gameManager.handManager.parseHandId(element.id)[1] === "leftHand"
+        ) {
+          split = new MoveSplit(
+            this.gameManager,
+            elementValue - 1,
+            otherElementValue + 1
+          );
+        } else {
+          split = new MoveSplit(
+            this.gameManager,
+            otherElementValue + 1,
+            elementValue - 1
+          );
+        }
+
+        if (split) {
+          this.gameManager.setPreviewSplit(split);
+        }
+        this.uiManager.clearPreviews();
       }
     });
     return changeCommitted;
@@ -439,8 +521,6 @@ class UIManager {
     this.messageElement = document.getElementById("winnerMessage");
     this.restartButton = document.getElementById("restartButton");
     this.splitButton = document.getElementById("splitButton");
-    this.splitContainer = document.getElementById("splitContainer");
-    this.splitCloseButton = document.getElementById("closeSplit");
     this.infobox = document.getElementById("info-box");
     this.infoButton = document.getElementById("info-button");
     this.closeInfo = document.getElementById("closeInfo");
@@ -455,15 +535,14 @@ class UIManager {
   // Initialize event listeners for UI elements
   initializeEventListeners() {
     this.restartButton.addEventListener("click", () => {
-      const selectedDifficulty = document.querySelector('input[name="radDifficulty"]:checked');
+      const selectedDifficulty = document.querySelector(
+        'input[name="radDifficulty"]:checked'
+      );
       this.gameManager.resetGame(selectedDifficulty.value);
       this.hidePopup();
     });
 
-    this.splitButton.addEventListener("click", () => this.showSplitOptions());
-    this.splitCloseButton.addEventListener("click", () =>
-      this.hideSplitOptions()
-    );
+    this.splitButton.addEventListener("click", () => this.handleSplitClick());
 
     this.infoButton.addEventListener("click", () => {
       this.infobox.style.display = "flex";
@@ -476,9 +555,7 @@ class UIManager {
     });
 
     this.playAgainButton.addEventListener("click", () => {
-
       this.hideWinnerPopup();
-
     });
   }
 
@@ -550,47 +627,10 @@ class UIManager {
     this.splitButton.style.cursor = enabled ? "pointer" : "not-allowed";
   }
 
-  // Show split options for the current player
-  showSplitOptions() {
-    const validDistributions = this.gameManager.getAllValidDistributions();
-    console.log(validDistributions);
-    const splitOptions = document.getElementById("splitOptions");
-    splitOptions.innerHTML = "";
-
-    validDistributions.forEach(([bag1, bag2]) => {
-      const button = document.createElement("button");
-      button.classList.add("split-option");
-
-      const img1 = document.createElement("img");
-      img1.src = `img/${bag1}.png`;
-      img1.alt = `Hand ${bag1}`;
-      button.appendChild(img1);
-
-      const img2 = document.createElement("img");
-      img2.src = `img/${bag2}.png`;
-      img2.alt = `Hand ${bag2}`;
-      button.appendChild(img2);
-
-      button.addEventListener("click", () => this.handleSplitClick(bag1, bag2));
-      splitOptions.appendChild(button);
-    });
-
-    this.splitContainer.style.display = "flex";
-  }
-
-  // Hide the split options
-  hideSplitOptions() {
-    this.splitContainer.style.display = "none";
-    this.splitButton.style.display = "flex";
-  }
-
-  // Handle a click on a split option
-  handleSplitClick(bag1, bag2) {
-    const moveSplit = new MoveSplit(this.gameManager, bag1, bag2);
+  handleSplitClick() {
+    const moveSplit = this.gameManager.previewSplit;
     if (moveSplit.isValid) {
-      console.log(bag1, bag2);
       this.gameManager.executeMove(moveSplit);
-      this.hideSplitOptions();
     }
   }
 
@@ -609,22 +649,25 @@ class UIManager {
         this.previewStates.set(elementImg, elementImg.src);
       }
       elementImg.src = `img/${sum >= 5 ? 0 : sum}.png`;
-    }
-  }
+      console.log(sum);
 
-  // Revert the hand preview to its original state
-  revertHandPreview(element) {
-    const elementImg = element.querySelector("img");
-    if (this.previewStates.has(elementImg)) {
-      elementImg.src = this.previewStates.get(elementImg);
-      this.previewStates.delete(elementImg);
+      if (sum >= 5 || sum === 0) {
+        console.log("sum is 0 or 5");
+        element.classList.add("non-draggable");
+      } else {
+        element.classList.remove("non-draggable");
+      }
     }
   }
 
   // Revert all previews to their original states
   revertAllPreviews() {
     this.previewStates.forEach((originalSrc, img) => {
-      img.src = originalSrc;
+      // if the hand is not 0 or 5, remove the non-draggable class
+      if (parseInt(img.src.split("/")[1].split(".")[0]) !== 0) {
+        img.parentElement.classList.remove("non-draggable");
+        img.src = originalSrc;
+      }
     });
     this.clearPreviews();
   }
@@ -686,8 +729,13 @@ class MoveSplit extends Move {
     this.newRight = newRight;
   }
 
+  getHands() {
+    return [this.newLeft, this.newRight];
+  }
+
   isValid() {
     const validSplits = this.gameManager.getAllValidDistributions();
+    console.log(validSplits);
     return validSplits.some(
       (split) =>
         (split[0] === this.newLeft && split[1] === this.newRight) ||
@@ -712,14 +760,14 @@ class computerBot {
     this.gameManager = gameManager;
   }
 
-  getHandStates(){
+  getHandStates() {
     const players = this.gameManager.gameState.getStateSnapshot();
     const player1 = players.player1;
     const player2 = players.player2;
     const player1State = [player1.leftHand, player1.rightHand];
     const player2State = [player2.leftHand, player2.rightHand];
     return [player1State, player2State];
-  }  
+  }
 
   animateAddMove(sourceHand, targetHand, callback) {
     const sourceElement = document.getElementById(sourceHand);
@@ -761,12 +809,10 @@ class computerBot {
 class randomComputerBot extends computerBot {
   constructor(gameManager) {
     super(gameManager);
-
   }
 
   performComputerMove() {
     const players = this.gameManager.gameState.getStateSnapshot();
-    console.log(players)
     const random = Math.floor(Math.random() * 2);
     if (random === 0) {
       this.performSplitMove();
@@ -784,16 +830,11 @@ class randomComputerBot extends computerBot {
     const split = validSplits[Math.floor(Math.random() * validSplits.length)];
 
     const move = new MoveSplit(this.gameManager, split[0], split[1]);
-    if (
-      move.isValid() &&
-      !this.gameManager.checkGameEnd() 
-    ) {
+    if (move.isValid() && !this.gameManager.checkGameEnd()) {
       this.animateSplitMove(() => {
         this.gameManager.executeMove(move);
       });
-    } else if (
-      !this.gameManager.checkGameEnd() 
-    ) {
+    } else if (!this.gameManager.checkGameEnd()) {
       this.performAddMove();
     }
   }
@@ -805,16 +846,11 @@ class randomComputerBot extends computerBot {
     const playerHand = playerHands[Math.floor(Math.random() * 2)];
 
     const move = new MoveAdd(this.gameManager, computerHand, playerHand);
-    if (
-      move.isValid() &&
-      !this.gameManager.checkGameEnd() 
-    ) {
+    if (move.isValid() && !this.gameManager.checkGameEnd()) {
       this.animateAddMove(computerHand, playerHand, () => {
         this.gameManager.executeMove(move);
       });
-    } else if (
-      !this.gameManager.checkGameEnd() 
-    ) {
+    } else if (!this.gameManager.checkGameEnd()) {
       this.performAddMove();
     }
   }
@@ -822,50 +858,55 @@ class randomComputerBot extends computerBot {
 
 class basicBot extends computerBot {
   constructor(gameManager) {
-      super(gameManager);
-      this.pyodideReady = this.initializePyodide();
+    super(gameManager);
+    this.pyodideReady = this.initializePyodide();
   }
 
   async initializePyodide() {
-      this.pyodide = await loadPyodide();
-      const response = await fetch('ai_move.py');
-      const pythonCode = await response.text();
-      await this.pyodide.runPythonAsync(pythonCode);
+    this.pyodide = await loadPyodide();
+    const response = await fetch("ai_move.py");
+    const pythonCode = await response.text();
+    await this.pyodide.runPythonAsync(pythonCode);
   }
 
   async performComputerMove() {
-      await this.pyodideReady;  
-      const playerStates = this.gameManager.gameState.getStateSnapshot();
-      
-      try {
-          const move = this.pyodide.runPython(`
+    await this.pyodideReady;
+    const playerStates = this.gameManager.gameState.getStateSnapshot();
+
+    try {
+      const move = this.pyodide
+        .runPython(
+          `
               import json
               player_states = json.loads('${JSON.stringify(playerStates)}')
               calculate_move(player_states)
-          `).toJs();
+          `
+        )
+        .toJs();
 
-          const [moveType, hand1, hand2] = move;
+      const [moveType, hand1, hand2] = move;
 
-          if (moveType === 'add') {
-            const sourceHand = 'top' + hand1.charAt(0).toUpperCase() + hand1.slice(1);
-            const targetHand = 'bottom' + hand2.charAt(0).toUpperCase() + hand2.slice(1);
-            console.log(sourceHand, targetHand)
-              const addMove = new MoveAdd(this.gameManager, sourceHand, targetHand);
-              if (addMove.isValid() && !this.gameManager.checkGameEnd()) {
-                  this.animateAddMove(sourceHand, targetHand, () => {
-                      this.gameManager.executeMove(addMove);
-                  });
-              }
-          } else if (moveType === 'split') {
-              const splitMove = new MoveSplit(this.gameManager, hand1, hand2);
-              if (splitMove.isValid() && !this.gameManager.checkGameEnd()) {
-                  this.animateSplitMove(() => {
-                      this.gameManager.executeMove(splitMove);
-                  });
-              }
-          }
-      } catch (error) {
-          console.error('Error executing Python code:', error);
+      if (moveType === "add") {
+        const sourceHand =
+          "top" + hand1.charAt(0).toUpperCase() + hand1.slice(1);
+        const targetHand =
+          "bottom" + hand2.charAt(0).toUpperCase() + hand2.slice(1);
+        const addMove = new MoveAdd(this.gameManager, sourceHand, targetHand);
+        if (addMove.isValid() && !this.gameManager.checkGameEnd()) {
+          this.animateAddMove(sourceHand, targetHand, () => {
+            this.gameManager.executeMove(addMove);
+          });
+        }
+      } else if (moveType === "split") {
+        const splitMove = new MoveSplit(this.gameManager, hand1, hand2);
+        if (splitMove.isValid() && !this.gameManager.checkGameEnd()) {
+          this.animateSplitMove(() => {
+            this.gameManager.executeMove(splitMove);
+          });
+        }
       }
+    } catch (error) {
+      console.error("Error executing Python code:", error);
+    }
   }
 }
