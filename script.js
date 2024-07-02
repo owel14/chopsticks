@@ -427,7 +427,10 @@ class DraggableManager {
         this.isOverlapping(element, otherElement) &&
         this.gameManager.handManager.parseHandId(element.id)[0] ===
           this.gameManager.handManager.parseHandId(otherElement.id)[0]
-      ) {
+          && this.gameManager.getHandValue(
+            otherElement.id
+      ) !== 4)
+      {
         isOverlapping = true;
         const elementValue = this.gameManager.getHandValue(element.id);
         const otherElementValue = this.gameManager.getHandValue(
@@ -465,7 +468,8 @@ class DraggableManager {
         otherElement !== element &&
         this.isOverlapping(element, otherElement) &&
         this.gameManager.handManager.parseHandId(element.id)[0] ===
-          this.gameManager.handManager.parseHandId(otherElement.id)[0]
+          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
+        this.gameManager.getHandValue(otherElement.id) !== 4
       ) {
         let split = null;
         const elementValue = this.gameManager.getHandValue(element.id);
