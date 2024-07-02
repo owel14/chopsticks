@@ -58,11 +58,11 @@
 }
 
 #bottomLeft  {
-  margin: 40px 60px 40px 60px;
+  margin: 40px 60px 0px 60px;
 }
 
 #bottomRight  {
-  margin: 40px 60px 40px 60px;
+  margin: 40px 60px 0px 60px;
 }
 
 /* Ensure hrContainer is a flex item */
@@ -369,10 +369,10 @@ body {
   }
   
   #bottomLeft {
-    margin:40px 60px 40px 0px;
+    margin:40px 60px 0px 0px;
   }
   
   #bottomRight {
-    margin:40px 0px 40px 60px;
+    margin:40px 0px 0px 60px;
   }
 }
