@@ -43,7 +43,6 @@
 
 .draggableContainer img {
   width: 100%;
-  height: 100%;
 }
 
 #topLeft img {
@@ -56,6 +55,14 @@
 
 #bottomRight img {
   transform: scaleX(-1);
+}
+
+#bottomLeft  {
+  margin: 40px 60px 40px 60px;
+}
+
+#bottomRight  {
+  margin: 40px 60px 40px 60px;
 }
 
 /* Ensure hrContainer is a flex item */
@@ -168,8 +175,9 @@ body {
   z-index: 1000;
 }
 
-.info-button:hover {
+#info-button:hover {
   background-color: #4681f4;
+  cursor: pointer;
 }
 
 .info-box {
@@ -234,6 +242,7 @@ body {
 
 #closeInfo:hover {
   background-color: #4681f4;
+  cursor: pointer;
 }
 
 #youWinPopup {
@@ -279,14 +288,15 @@ body {
 }
 
 #splitButton {
-  font-size: 16px;
-  background-color: #55c2da;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+    font-size: 20px;
+    background-color: #55c2da;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0px 10px 40px 10px;
+    transition: background-color 0.3s ease
 }
 
 #splitButton:hover {

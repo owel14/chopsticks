@@ -11,38 +11,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
     <script src="script.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <!-- <script defer src="https://pyscript.net/latest/pyscript.js"></script> -->
-    <!-- <script src="https://cdn.jsdelivr.net/pyodide/v0.26.1/full/pyodide.js"></script> -->
 </head>
 
-<!-- notes -->
-
 <body>
-    <div class="infoButton">
-    </div>
     <div class="gameContainer">
         <div class="container">
             <button id="info-button">?</button>
 
-            <div class = "playerHeader">
-                <header id ="computer" >Computer</header>
+            <div class="playerHeader">
+                <header id="computer">Computer</header>
             </div>
             <div class="draggableContainer">
                 <div id="topLeft" class="draggable computer hand">
                     <img src="img/1.png" alt="computerLeftHand">
-
                 </div>
 
                 <div id="topRight" class="draggable computer hand">
                     <img src="img/1.png" alt="ComputerRightHand">
                 </div>
-
             </div>
-
-
         </div>
 
         <div class="hrContainer">
@@ -61,28 +50,28 @@
             </div>
             <button id="splitButton">Split</button>
             <div class="playerHeader">
-                <header id ="player">Player</header>
+                <header id="player">Player</header>
             </div>
         </div>
     </div>
 
-    <div id="popupContainer" class="popup-container" display="none">
-        <div class="popup gameModePopup" id= 'gameModePopup'>
+    <div id="popupContainer" class="popup-container">
+        <div class="popup gameModePopup" id='gameModePopup'>
             <h2 id="popupHeader">Select your game difficulty:</h2>
-                    <div class ='difficulty-selection'>
-                        <label>
-                            <input type="radio" id="botType" name="radDifficulty" value="easy" checked> Easy
-                        </label>
-                        <label>
-                            <input type="radio" id="botType" name="radDifficulty" value="hard" > Hard
-                        </label>
-                    </div>
+            <div class='difficulty-selection'>
+                <label>
+                    <input type="radio" id="botType" name="radDifficulty" value="easy" checked> Easy
+                </label>
+                <label>
+                    <input type="radio" id="botType" name="radDifficulty" value="hard"> Hard
+                </label>
+            </div>
             <button id="restartButton">New Game</button>
         </div>
     </div>
 
     <div id="info-box" class="info-box">
-        <div id="info-content" class = "info-content">
+        <div id="info-content" class="info-content">
             <h3>How to Play Chopsticks</h3>
             <p><strong>Objective:</strong> Make your opponent's hands both "out."</p>
             <p><strong>Setup:</strong> Each player starts with one finger up on each hand.</p>
@@ -96,14 +85,12 @@
         </div>
     </div>
 
-    <div class="popup" id="youWinPopup">
+    <div id="youWinPopup" class="popup">
         <h2 id="winnerMessage"></h2>
         <button id="playAgainButton">Play Again</button>
     </div>
 
-
-      <py-script src="ai_move.py"></py-script>
-
+    <py-script src="ai_move.py"></py-script>
 </body>
 
 </html>
