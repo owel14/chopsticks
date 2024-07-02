@@ -345,3 +345,225 @@ body {
 .move-away-from-center {
   transform: translate(0, 25px) !important;
 }
+
+@media only screen and (min-width: 1024px) {
+  /* Desktops and laptops */
+  .draggable {
+    width: 200px;
+    height: auto;
+  }
+
+  header {
+    font-size: 50px;
+  }
+
+  #info-button {
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 120px;
+  }
+
+  #splitButton {
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 35px;
+  }
+
+  .info-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-content {
+    width: 60%;
+    max-width: 800px;
+    max-height: 80%;
+    overflow-y: auto;
+    font-size: 18px; /* Increased font size */
+  }
+}
+
+@media only screen and (min-width: 720px) {
+  /* Most tablets and large phones in portrait mode */
+  .draggable {
+    width: 120px;
+    height: auto;
+  }
+
+  header {
+    font-size: 25px;
+  }
+
+  #info-button {
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 150px;
+  }
+
+  #splitButton {
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 35px;
+  }
+
+  .info-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-content {
+    width: 70%;
+    max-width: 600px;
+    max-height: 80%;
+    overflow-y: auto;
+    font-size: 16px; /* Slightly smaller font size */
+  }
+}
+
+@media only screen and (max-width: 480px) {
+
+  body, html {
+    overflow: hidden;
+  }
+  /* Small phones in portrait mode */
+  .draggable {
+    width: 60px;
+    height: auto;
+    margin: 20px; /* Ensure margins do not cause overflow */
+  }
+
+  header {
+    font-size: 20px;
+  }
+
+  #info-button {
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 145px;
+  }
+
+  #splitButton {
+    position: absolute;
+    left: 0%;
+    bottom: 35px;
+    transform: translateX(calc(-50% + 30px)) translateY(10px); /* Adjust X and Y values */
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #55c2da;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .info-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-content {
+    width: 80%;
+    max-width: 400px;
+    max-height: 70%;
+    overflow-y: auto;
+    font-size: 14px; /* Smaller font size for readability */
+  }
+
+  #gameModePopup.popup {
+    background-color: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    z-index: 1001;
+  }
+
+  #youWinPopup.popup {
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    position: fixed;
+  }
+
+}
+
+@media only screen and (max-width: 360px) {
+  /* Very small phones in portrait mode */
+
+  body, html {
+    overflow: hidden;
+  }
+
+  .draggable {
+    width: 60px;
+    height: auto;
+    margin: 10px; /* Ensure margins do not cause overflow */
+  }
+
+  header {
+    font-size: 20px;
+  }
+
+  #info-button {
+    left: 55%;
+    transform: translateX(-50%);
+    margin-bottom: 130px;
+    padding-left: 5px;
+    padding-right: 5px;
+    font-size: 15px;
+    margin-left: 125px;
+  }
+
+  #splitButton {
+    transform: translate(-80px, -20px);
+    margin-bottom: 35px;
+  }
+
+  .info-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info-content {
+    width: 90%;
+    max-width: 300px;
+    max-height: 60%;
+    overflow-y: auto;
+    font-size: 12px; /* Smaller font size for very small screens */
+  }
+
+  #gameModePopup.popup {
+    background-color: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    position: relative;
+    z-index: 1001;
+  }
+
+  #gameModePopup.popup button {
+    margin-top: 60px;
+  }
+
+  #player{
+    margin-top: 200px;
+    margin-bottom: 120px;
+  }
+
+  #computer{
+    margin-top: 120px;
+    margin-bottom: 200px;
+  }
+}
+
+
+
