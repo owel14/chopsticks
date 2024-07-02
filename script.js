@@ -241,6 +241,7 @@ class GameManager {
     } else {
       handElement.classList.remove("non-draggable");
     }
+    this.uiManager.updateHandImage(handId);
   }
 
   isCurrentPlayerTurn(handId) {
@@ -599,8 +600,14 @@ class UIManager {
     const imgElement = document.getElementById(handId).querySelector("img");
     const value = this.gameManager.getHandValue(handId);
     imgElement.src = `img/${value}.png`;
+    
+    // Set draggable status based on hand value
+    if (value === 0) {
+      document.getElementById(handId).classList.add("non-draggable");
+    } else {
+      document.getElementById(handId).classList.remove("non-draggable");
+    }
   }
-
   // Reset the UI to its initial state
   resetUI() {
     this.updateAllHands();
@@ -659,15 +666,17 @@ class UIManager {
   // Revert all previews to their original states
   revertAllPreviews() {
     this.previewStates.forEach((originalSrc, img) => {
-      // if the hand is not 0 or 5, remove the non-draggable class
-      if (parseInt(img.src.split("/")[1].split(".")[0]) !== 0) {
+      img.src = originalSrc;
+      const handId = img.parentElement.id;
+      const value = this.gameManager.getHandValue(handId);
+      if (value === 0) {
+        img.parentElement.classList.add("non-draggable");
+      } else {
         img.parentElement.classList.remove("non-draggable");
-        img.src = originalSrc;
       }
     });
     this.clearPreviews();
   }
-
   // Clear all preview states
   clearPreviews() {
     this.previewStates.clear();
