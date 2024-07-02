@@ -447,9 +447,12 @@ body {
   }
 
   #splitButton {
-    left: calc(85% - 100vw - 10px);
-    margin-top: 100px;
-    margin-bottom: 35px;
+    position: relative; /* Ensure it's positioned relative to its container */
+    margin-top: -80px; /* Adjust based on your layout */
+    margin-bottom: 75px;
+    justify-content: center;
+    left: calc(50% + (36% - 100vw)); /* Center horizontally */
+    transform: translateX(-50%);
   }
 
   .info-box {
@@ -523,8 +526,12 @@ body {
   }
 
   #splitButton {
-    left: calc(50% - 100vw - 10px);
-    margin-bottom: 35px;
+    position: relative; /* Ensure it's positioned relative to its container */
+    margin-top: -80px; /* Adjust based on your layout */
+    margin-bottom: 75px;
+    justify-content: center;
+    left: calc(50% + (36% - 100vw)); /* Center horizontally */
+    transform: translateX(-50%);
   }
 
   .info-box {
