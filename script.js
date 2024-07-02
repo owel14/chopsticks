@@ -546,12 +546,10 @@ class UIManager {
 
     this.infoButton.addEventListener("click", () => {
       this.infobox.style.display = "flex";
-      this.popupElement.style.display = "none";
     });
 
     this.closeInfo.addEventListener("click", () => {
       this.infobox.style.display = "none";
-      this.popupElement.style.display = "flex";
     });
 
     this.playAgainButton.addEventListener("click", () => {
@@ -649,10 +647,8 @@ class UIManager {
         this.previewStates.set(elementImg, elementImg.src);
       }
       elementImg.src = `img/${sum >= 5 ? 0 : sum}.png`;
-      console.log(sum);
 
       if (sum >= 5 || sum === 0) {
-        console.log("sum is 0 or 5");
         element.classList.add("non-draggable");
       } else {
         element.classList.remove("non-draggable");
@@ -735,7 +731,6 @@ class MoveSplit extends Move {
 
   isValid() {
     const validSplits = this.gameManager.getAllValidDistributions();
-    console.log(validSplits);
     return validSplits.some(
       (split) =>
         (split[0] === this.newLeft && split[1] === this.newRight) ||

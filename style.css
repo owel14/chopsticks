@@ -10,18 +10,19 @@
 .container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
+  height: 48vh;
   padding: 20px;
   margin-bottom: 10px;
-  position: relative;
 }
 
 .draggableContainer {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .draggable {
@@ -32,8 +33,9 @@
   width: 100px;
   height: 100px;
   float: right;
-  margin: 60px;
+  margin: 40px 60px 40px 60px;
 }
+
 
 .non-draggable {
   cursor: initial; /* or any other style to indicate non-draggable */
@@ -41,7 +43,6 @@
 
 .draggableContainer img {
   width: 100%;
-  height: 100%;
 }
 
 #topLeft img {
@@ -54,6 +55,14 @@
 
 #bottomRight img {
   transform: scaleX(-1);
+}
+
+#bottomLeft  {
+  margin: 40px 60px 0px 60px;
+}
+
+#bottomRight  {
+  margin: 40px 60px 0px 60px;
 }
 
 /* Ensure hrContainer is a flex item */
@@ -69,9 +78,12 @@ hr {
   border-top: 10px solid grey;
 }
 
-header {
+.playerHeader {
   font-weight: 400;
   font-size: 25px;
+  height: 60px;
+  display: flex;
+  align-items: center;
 }
 
 body {
@@ -94,25 +106,23 @@ body {
   font-style: normal;
 }
 
-#gameModePopup.popup {
+.gameModePopup {
   background-color: white;
-  padding: 60px;
+  padding: 20px;
   border-radius: 20px;
-  text-align: center;
-  position: relative;
   z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-#gameModePopup.popup h2 {
+.gameModePopup h2 {
   margin-bottom: 20px;
 }
 
-#gameModePopup.popup button {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 20px;
+.gameModePopup button {
+  text-align: center;
+  padding: 10px;
   font-size: 16px;
   background-color: #55c2da;
   color: white;
@@ -122,61 +132,52 @@ body {
   transition: background-color 0.3s ease;
 }
 
-#gameModePopup.popup button:hover {
+.gameModePopup button:hover {
   background-color: #4681f4;
 }
 
-.difficulty {
+.difficulty-selection {
   display: flex;
-  justify-content: space-between; /* Align items to opposite ends */
-  align-items: center; /* Center items vertically */
-  padding: 10px; /* Adjust padding as needed */
+  justify-content: space-between;
+  margin: 30px;
 }
 
-#difficulty-selection label {
+.difficulty-selection label {
   display: flex;
   align-items: center;
-  font-size: 15px;
+  margin: 0px 30px 0px 30px;
+  font-size: 18px;
 }
 
-#difficulty-selection input[type="radio"] {
-  width: 15px; /* Adjust size as needed */
-  height: 15px;
+.difficulty-selection input[type="radio"] {
+  width: 18px;
+  height: 18px;
   margin-right: 10px;
 }
 
-#difficulty-selection {
-  display: flex;
-  justify-content: space-between;
-  width: 200px; /* Adjust as needed */
-  margin-bottom: 20px;
-}
-
-#botType {
-  margin: 10px;
-}
-
-#popupHeader{
+#popupHeader {
   font-size: 20px;
   margin: 10px;
 }
 
 #info-button {
-  position: absolute;
-  left: 50%;
-  margin-bottom: 180px;
-  margin-left: 140px;
   font-size: 18px;
   font-weight: bold;
   background-color: #55c2da;
   color: white;
+  padding: 10px 15px;
   border: none;
-  border-radius: 30px;
+  border-radius: 10px;
   transition: background-color 0.3s ease;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 1000;
 }
 
 #info-button:hover {
   background-color: #4681f4;
+  cursor: pointer;
 }
 
 .info-box {
@@ -223,8 +224,7 @@ body {
   margin-bottom: 5px;
 }
 
-
-#closeInfo{
+#closeInfo {
   padding: 15px;
   padding-left: 20px;
   padding-right: 20px;
@@ -242,6 +242,7 @@ body {
 
 #closeInfo:hover {
   background-color: #4681f4;
+  cursor: pointer;
 }
 
 #youWinPopup {
@@ -287,19 +288,15 @@ body {
 }
 
 #splitButton {
-  position: absolute;
-  margin-left: 300px;
-  margin-bottom: 35px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #55c2da;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+    font-size: 20px;
+    background-color: #55c2da;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0px 10px 40px 10px;
+    transition: background-color 0.3s ease
 }
 
 #splitButton:hover {
@@ -344,4 +341,38 @@ body {
 
 .move-away-from-center {
   transform: translate(0, 25px) !important;
+}
+
+@media only screen and (min-width: 1024px) {
+}
+
+@media only screen and (min-width: 720px) {
+}
+
+@media only screen and (max-width: 480px) {
+  .draggable {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    width: 100px;
+    height: 100px;
+    float: right;
+    margin: 40px 60px 40px 60px;
+  }
+  #topLeft {
+    margin:40px 60px 40px 0px;
+  }
+  
+  #topRight {
+    margin:40px 0px 40px 60px;
+  }
+  
+  #bottomLeft {
+    margin:40px 60px 0px 0px;
+  }
+  
+  #bottomRight {
+    margin:40px 0px 0px 60px;
+  }
 }
