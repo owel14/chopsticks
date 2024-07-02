@@ -546,12 +546,10 @@ class UIManager {
 
     this.infoButton.addEventListener("click", () => {
       this.infobox.style.display = "flex";
-      this.popupElement.style.display = "none";
     });
 
     this.closeInfo.addEventListener("click", () => {
       this.infobox.style.display = "none";
-      this.popupElement.style.display = "flex";
     });
 
     this.playAgainButton.addEventListener("click", () => {
