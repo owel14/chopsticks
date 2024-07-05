@@ -145,7 +145,7 @@ body {
 .difficulty-selection label {
   display: flex;
   align-items: center;
-  margin: 0px 30px 0px 30px;
+  margin: 0px 40px 0px 40px;
   font-size: 18px;
 }
 
@@ -358,21 +358,27 @@ body {
     width: 100px;
     height: 100px;
     float: right;
-    margin: 40px 60px 40px 60px;
   }
   #topLeft {
-    margin:40px 60px 40px 0px;
-  }
-  
-  #topRight {
-    margin:40px 0px 40px 60px;
-  }
-  
-  #bottomLeft {
     margin:40px 60px 0px 0px;
   }
   
-  #bottomRight {
+  #topRight {
     margin:40px 0px 0px 60px;
+  }
+  
+  #bottomLeft {
+    margin:20px 60px 0px 0px;
+  }
+  
+  #bottomRight {
+    margin:20px 0px 0px 60px;
+  }
+
+  .difficulty-selection label {
+    display: flex;
+    align-items: center;
+    margin: 0px 10px 0px 10px;
+    font-size: 14px;
   }
 }

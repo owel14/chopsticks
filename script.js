@@ -158,7 +158,7 @@ class BotManager {
         this.currentBot = new randomComputerBot(this.gameManager);
         break;
       case "hard":
-        this.currentBot = new basicBot(this.gameManager);
+        this.currentBot = new MinimaxBot(this.gameManager);
         break;
       default:
         this.currentBot = new randomComputerBot(this.gameManager);
@@ -427,11 +427,9 @@ class DraggableManager {
         otherElement !== element &&
         this.isOverlapping(element, otherElement) &&
         this.gameManager.handManager.parseHandId(element.id)[0] ===
-          this.gameManager.handManager.parseHandId(otherElement.id)[0]
-          && this.gameManager.getHandValue(
-            otherElement.id
-      ) !== 4)
-      {
+          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
+        this.gameManager.getHandValue(otherElement.id) !== 4
+      ) {
         isOverlapping = true;
         const elementValue = this.gameManager.getHandValue(element.id);
         const otherElementValue = this.gameManager.getHandValue(
@@ -600,7 +598,7 @@ class UIManager {
     const imgElement = document.getElementById(handId).querySelector("img");
     const value = this.gameManager.getHandValue(handId);
     imgElement.src = `img/${value}.png`;
-    
+
     // Set draggable status based on hand value
     if (value === 0) {
       document.getElementById(handId).classList.add("non-draggable");
@@ -758,7 +756,6 @@ class MoveSplit extends Move {
     }
   }
 }
-
 class computerBot {
   constructor(gameManager) {
     this.gameManager = gameManager;
@@ -860,57 +857,261 @@ class randomComputerBot extends computerBot {
   }
 }
 
-class basicBot extends computerBot {
+class MinimaxBot extends computerBot {
   constructor(gameManager) {
     super(gameManager);
-    this.pyodideReady = this.initializePyodide();
+    this.depth = 15;
   }
 
-  async initializePyodide() {
-    this.pyodide = await loadPyodide();
-    const response = await fetch("ai_move.py");
-    const pythonCode = await response.text();
-    await this.pyodide.runPythonAsync(pythonCode);
+  performComputerMove() {
+    const state = {
+      player1: this.gameManager.gameState.getStateSnapshot().player1,
+      player2: this.gameManager.gameState.getStateSnapshot().player2,
+      isPlayer1Turn: true, // The bot is always player1 in our representation
+    };
+    const bestMove = this.minimax(state, this.depth, true);
+
+    console.log(bestMove);
+
+    if (!bestMove.move) {
+      console.log("No valid moves available or game is over");
+      return;
+    }
+
+    if (bestMove.move.type === "add") {
+      const sourceHand =
+        "top" +
+        bestMove.move.from.charAt(0).toUpperCase() +
+        bestMove.move.from.slice(1);
+      const targetHand =
+        "bottom" +
+        bestMove.move.to.charAt(0).toUpperCase() +
+        bestMove.move.to.slice(1);
+      const addMove = new MoveAdd(this.gameManager, sourceHand, targetHand);
+      if (addMove.isValid() && !this.gameManager.checkGameEnd()) {
+        this.animateAddMove(sourceHand, targetHand, () => {
+          this.gameManager.executeMove(addMove);
+        });
+      }
+    } else if (bestMove.move.type === "split") {
+      const splitMove = new MoveSplit(
+        this.gameManager,
+        bestMove.move.left,
+        bestMove.move.right
+      );
+      if (splitMove.isValid() && !this.gameManager.checkGameEnd()) {
+        this.animateSplitMove(() => {
+          this.gameManager.executeMove(splitMove);
+        });
+      }
+    }
   }
 
-  async performComputerMove() {
-    await this.pyodideReady;
-    const playerStates = this.gameManager.gameState.getStateSnapshot();
+  minimax(state, depth, isMaximizingPlayer, alpha = -Infinity, beta = Infinity) {
+    if (depth === 0 || this.isGameOver(state)) {
+      return { score: this.evaluateState(state) };
+    }
 
-    try {
-      const move = this.pyodide
-        .runPython(
-          `
-              import json
-              player_states = json.loads('${JSON.stringify(playerStates)}')
-              calculate_move(player_states)
-          `
-        )
-        .toJs();
+    const moves = this.getAllPossibleMoves(state);
 
-      const [moveType, hand1, hand2] = move;
+    let bestMove = null;
 
-      if (moveType === "add") {
-        const sourceHand =
-          "top" + hand1.charAt(0).toUpperCase() + hand1.slice(1);
-        const targetHand =
-          "bottom" + hand2.charAt(0).toUpperCase() + hand2.slice(1);
-        const addMove = new MoveAdd(this.gameManager, sourceHand, targetHand);
-        if (addMove.isValid() && !this.gameManager.checkGameEnd()) {
-          this.animateAddMove(sourceHand, targetHand, () => {
-            this.gameManager.executeMove(addMove);
-          });
+    if (isMaximizingPlayer) {
+      let maxEval = -Infinity;
+      for (const move of moves) {
+        const newState = this.applyMove(state, move);
+        const evaluation = this.minimax(newState, depth - 1, false, alpha, beta).score;
+        if (evaluation > maxEval) {
+          maxEval = evaluation;
+          bestMove = move;
         }
-      } else if (moveType === "split") {
-        const splitMove = new MoveSplit(this.gameManager, hand1, hand2);
-        if (splitMove.isValid() && !this.gameManager.checkGameEnd()) {
-          this.animateSplitMove(() => {
-            this.gameManager.executeMove(splitMove);
-          });
+        alpha = Math.max(alpha, evaluation);
+        if (beta <= alpha) {
+          break; // Beta cutoff
         }
       }
-    } catch (error) {
-      console.error("Error executing Python code:", error);
+      return { move: bestMove, score: maxEval };
+    } else {
+      let minEval = Infinity;
+      for (const move of moves) {
+        const newState = this.applyMove(state, move);
+        const evaluation = this.minimax(newState, depth - 1, true, alpha, beta).score;
+        if (evaluation < minEval) {
+          minEval = evaluation;
+          bestMove = move;
+        }
+        beta = Math.min(beta, evaluation);
+        if (beta <= alpha) {
+          break; // Alpha cutoff
+        }
+      }
+      return { move: bestMove, score: minEval };
     }
+  }
+
+  isGameOver(state) {
+    return (
+      (state.player1.leftHand === 0 && state.player1.rightHand === 0) ||
+      (state.player2.leftHand === 0 && state.player2.rightHand === 0)
+    );
+  }
+
+  evaluateState(state) {
+    let score = 0;
+
+    //check for immediate win or loss
+    if (state.player2.leftHand === 0 && state.player2.rightHand === 0) {
+      return 100;
+    } else if (state.player1.leftHand === 0 && state.player1.rightHand === 0) {
+      return -100;
+    }
+
+    //check if the bot has a 0,1 state and its not their turn and the opponent doesn't has a 0,1 state
+    if(
+      state.player1.leftHand + state.player1.rightHand <= 1 &&
+      !state.isPlayer1Turn &&
+      state.player2.leftHand + state.player2.rightHand > 1
+    ) {
+      score -= 10;
+    }
+
+    //check if the opponent has a 0,1 state and its not the bot's turn and the bot doesn't has a 0,1 state
+    if(
+      state.player2.leftHand + state.player2.rightHand <= 1 &&
+      !state.isPlayer1Turn &&
+      state.player1.leftHand + state.player1.rightHand > 1
+    ) {
+      score += 10;
+    }
+
+    //check if the bot has a 0,1 state and its their turn and the opponent doesn't has a 0,1 state
+    if(
+      state.player1.leftHand + state.player1.rightHand <= 1 &&
+      state.isPlayer1Turn &&
+      state.player2.leftHand + state.player2.rightHand > 1
+    ) {
+      score -= 10;
+    }
+
+    //check if the opponent has a 0,1 state and its the bot's turn and the bot doesn't has a 0,1 state
+    if(
+      state.player2.leftHand + state.player2.rightHand <= 1 &&
+      state.isPlayer1Turn &&
+      state.player1.leftHand + state.player1.rightHand > 1
+    ) {
+      score += 10;
+    }
+
+    //check if you have the ability to win in the next move
+    //check if the player only has 1 hand left and the other hand is 0
+    if(state.player2.leftHand === 0 && state.isPlayer1Turn) {
+      if(state.player1.leftHand + state.player2.rightHand > 4 || state.player1.rightHand + state.player2.rightHand > 4) {
+        score += 100;
+      }
+    }
+
+    if(state.player2.rightHand === 0 && state.isPlayer1Turn) {
+      if(state.player1.leftHand + state.player2.leftHand > 4 || state.player1.rightHand + state.player2.leftHand > 4) {
+        score += 100;
+      }
+    }
+
+    if(state.player1.leftHand === 0 && !state.isPlayer1Turn) {
+      if(state.player2.leftHand + state.player2.rightHand > 4 || state.player2.rightHand + state.player2.rightHand > 4) {
+        score -= 100;
+      }
+    }
+
+    if(state.player1.rightHand === 0 && !state.isPlayer1Turn) {
+      if(state.player2.leftHand + state.player1.leftHand > 4 || state.player2.rightHand + state.player1.leftHand > 4) {
+        score -= 100;
+      }
+    }
+
+    return score;
+
+  }
+
+  getAllPossibleMoves(state) {
+    const moves = [];
+    const player = state.isPlayer1Turn ? state.player1 : state.player2;
+    const opponent = state.isPlayer1Turn ? state.player2 : state.player1;
+
+    const addedStates = new Set();
+
+    // Helper function to add move if it results in a new state
+    const addMoveIfUnique = (move) => {
+      const newState = this.applyMove(state, move);
+      const stateKey = this.getSymmetricStateKey(newState);
+      if (!addedStates.has(stateKey)) {
+        moves.push(move);
+        addedStates.add(stateKey);
+      }
+    };
+
+    // Add moves
+    if (player.leftHand !== 0) {
+      if (opponent.leftHand !== 0)
+        addMoveIfUnique({ type: "add", from: "left", to: "left" });
+      if (opponent.rightHand !== 0)
+        addMoveIfUnique({ type: "add", from: "left", to: "right" });
+    }
+    if (player.rightHand !== 0) {
+      if (opponent.leftHand !== 0)
+        addMoveIfUnique({ type: "add", from: "right", to: "left" });
+      if (opponent.rightHand !== 0)
+        addMoveIfUnique({ type: "add", from: "right", to: "right" });
+    }
+
+    // Split moves
+    const totalFingers = player.leftHand + player.rightHand;
+    for (let left = 0; left <= Math.floor(totalFingers / 2); left++) {
+      const right = totalFingers - left;
+      if (
+        right >= 0 &&
+        right <= 4 &&
+        // new unique state that is not symmetrical to original
+        (left !== player.leftHand && right !== player.rightHand) &&
+        (left !== player.rightHand && right !== player.leftHand)
+
+      ) {
+        addMoveIfUnique({ type: "split", left, right });
+      }
+    }
+
+    return moves;
+  }
+
+  getSymmetricStateKey(state) {
+    const p1 = this.getSymmetricHandKey(state.player1);
+    const p2 = this.getSymmetricHandKey(state.player2);
+    return `${p1}|${p2}|${state.isPlayer1Turn}`;
+  }
+
+  getSymmetricHandKey(player) {
+    const hands = [player.leftHand, player.rightHand].sort();
+    return hands.join(",");
+  }
+
+  applyMove(state, move) {
+    const newState = JSON.parse(JSON.stringify(state));
+    const player = newState.isPlayer1Turn ? newState.player1 : newState.player2;
+    const opponent = newState.isPlayer1Turn
+      ? newState.player2
+      : newState.player1;
+
+    if (move.type === "add") {
+      const sourceValue = player[move.from + "Hand"];
+      const targetValue = opponent[move.to + "Hand"];
+      opponent[move.to + "Hand"] = (sourceValue + targetValue) >= 5 ? 0 : (sourceValue + targetValue);
+    } else if (move.type === "split") {
+      player.leftHand = move.left;
+      player.rightHand = move.right;
+    }
+
+    // Switch turns
+    newState.isPlayer1Turn = !newState.isPlayer1Turn;
+
+    return newState;
   }
 }

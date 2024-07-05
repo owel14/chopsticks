@@ -12,12 +12,12 @@
 
 7. Add a bot (done)
 
-8. Show a menu
+8. Show a menu (done)
 
 Issues
 
-1. On new screen top hands are transparent
+1. On new screen top hands are transparent (done)
 
-2. Menu is too small
+2. Menu is too small (done)
 
-3. Split options is too small
+3. Split options is too small (done)
