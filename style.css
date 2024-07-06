@@ -30,15 +30,14 @@
   align-items: center;
   justify-content: center;
   cursor: grab;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   float: right;
-  margin: 40px 60px 40px 60px;
 }
 
 
 .non-draggable {
-  cursor: initial; /* or any other style to indicate non-draggable */
+  cursor: initial; 
 }
 
 .draggableContainer img {
@@ -57,21 +56,28 @@
   transform: scaleX(-1);
 }
 
+#topLeft {
+  margin: 40px 60px 20px 60px;
+}
+
+#topRight {
+  margin: 40px 60px 20px 60px;
+}
+
 #bottomLeft  {
-  margin: 40px 60px 0px 60px;
+  margin: 20px 60px 0px 60px;
 }
 
 #bottomRight  {
-  margin: 40px 60px 0px 60px;
+  margin: 20px 60px 0px 60px;
 }
 
-/* Ensure hrContainer is a flex item */
 .hrContainer {
   display: flex;
   justify-content: center;
   width: 100vw;
 }
-/* Style for hr element */
+
 hr {
   width: 100vw;
   border: none;
@@ -204,24 +210,25 @@ body {
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   align-items: center;
+  text-align: center;
 }
 
 .info-content h3 {
   font-size: 28px;
-  text-align: center;
 }
 
 .info-content p {
   margin-bottom: 10px;
-  text-align: center;
 }
 
-.info-content ul {
-  margin-bottom: 10px;
+.info-content img{
+  width:50%;
 }
 
-.info-content li {
-  margin-bottom: 5px;
+.gifWrapper {
+  display: flex;
+  justify-content: center;
+  margin:5px;
 }
 
 #closeInfo {
