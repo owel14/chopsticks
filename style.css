@@ -353,10 +353,14 @@ body {
     transform: translate(0, 25px) !important;
   }
 
-  @media only screen and (min-width: 1024px) {
-  }
+  @media only screen and (max-width: 540px) {
+    .infoHeader h3{
+      padding: 0px 60px
+    }
 
-  @media only screen and (min-width: 720px) {
+    #closeinfo{
+      right:10px
+    }
   }
 
   @media only screen and (max-width: 480px) {
@@ -391,4 +395,5 @@ body {
       margin: 0px 10px 0px 10px;
       font-size: 14px;
     }
+
   }
