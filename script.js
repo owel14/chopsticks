@@ -3,15 +3,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const gameManager = new GameManager();
   const uiManager = new UIManager(gameManager);
   const draggableManager = new DraggableManager(gameManager, uiManager);
-
   gameManager.setUIManager(uiManager);
   gameManager.setDraggableManager(draggableManager);
-
   gameManager.initializeGame();
 });
 
 class GameState {
   constructor() {
+    // Initialize the game state with default values
     this.players = {
       player1: { leftHand: 1, rightHand: 1 },
       player2: { leftHand: 1, rightHand: 1 },
@@ -21,32 +20,39 @@ class GameState {
     this.isGameOver = false;
   }
 
+  // Get the current player's ID
   getCurrentPlayer() {
     return this.currentPlayer;
   }
 
+  // Create a deep copy of the current game state
   getStateSnapshot() {
     return JSON.parse(JSON.stringify(this.players));
   }
 
+  // Switch the starting player for the next game
   switchStartingPlayer() {
     this.startingPlayer =
       this.startingPlayer === "player1" ? "player2" : "player1";
   }
 
+  // Get the value of a specific hand for a player
   getHandValue(playerId, hand) {
     return this.players[playerId][hand];
   }
 
+  // Set the value of a specific hand for a player
   setHandValue(playerId, hand, value) {
     this.players[playerId][hand] = value;
   }
 
+  // Switch turns between players
   switchTurn() {
     this.currentPlayer =
       this.currentPlayer === "player1" ? "player2" : "player1";
   }
 
+  // Reset the game state to starting conditions
   reset() {
     this.players.player1 = { leftHand: 1, rightHand: 1 };
     this.players.player2 = { leftHand: 1, rightHand: 1 };
@@ -54,6 +60,7 @@ class GameState {
     this.isGameOver = false;
   }
 
+  // Check if a player has been defeated (both hands at 0)
   isPlayerDefeated(playerId) {
     return (
       this.getHandValue(playerId, "leftHand") === 0 &&
@@ -61,6 +68,7 @@ class GameState {
     );
   }
 
+  // Check if the game has ended and return the winner if so
   checkGameEnd() {
     const isPlayer1Defeated = this.isPlayerDefeated("player1");
     const isPlayer2Defeated = this.isPlayerDefeated("player2");
@@ -78,16 +86,19 @@ class HandManager {
     this.gameState = gameState;
   }
 
+  // Get the value of a specific hand
   getHandValue(handId) {
     const [playerId, hand] = this.parseHandId(handId);
     return this.gameState.getHandValue(playerId, hand);
   }
 
+  // Set the value of a specific hand
   setHandValue(handId, value) {
     const [playerId, hand] = this.parseHandId(handId);
     this.gameState.setHandValue(playerId, hand, value);
   }
 
+  // Parse a hand ID into player ID and hand (left/right)
   parseHandId(handId) {
     const regex = /^(top|bottom)(Left|Right)$/;
     const match = handId.match(regex);
@@ -101,12 +112,14 @@ class HandManager {
     return [undefined, undefined];
   }
 
+  // Calculate the sum of two hands' values
   calculateSum(handId1, handId2) {
     const value1 = this.getHandValue(handId1);
     const value2 = this.getHandValue(handId2);
     return value1 + value2;
   }
 
+  // Get all valid distributions for splitting hands
   getAllValidDistributions(stateSnapeShot) {
     const currentPlayer = this.gameState.getCurrentPlayer();
     const currentLeft = stateSnapeShot[currentPlayer].leftHand;
@@ -118,6 +131,7 @@ class HandManager {
     );
   }
 
+  // Generate all possible distributions for a given total
   generateDistributions(total) {
     const distributions = [];
     for (let i = 0; i <= 4; i++) {
@@ -137,6 +151,7 @@ class HandManager {
     return distributions;
   }
 
+  // Check if a distribution is different from the current hand state
   isNewDistribution(distribution, currentLeft, currentRight) {
     const [newLeft, newRight] = distribution;
     return (
@@ -152,24 +167,30 @@ class BotManager {
     this.currentBot = null;
   }
 
+  // Set the bot type based on difficulty level
   setBot(botType) {
     switch (botType) {
       case "easy":
         this.currentBot = new randomComputerBot(this.gameManager);
         break;
+      case "medium":
+        this.currentBot = new MixedBot(this.gameManager);
+        break;
       case "hard":
-        this.currentBot = new MinimaxBot(this.gameManager);
+        this.currentBot = new MinimaxBot(this.gameManager, 12);
         break;
       default:
         this.currentBot = new randomComputerBot(this.gameManager);
     }
   }
 
+  // Execute a computer move if it's the computer's turn
   runComputerBot() {
     if (
       this.gameManager.gameState.getCurrentPlayer() === "player1" &&
       this.currentBot
     ) {
+      // Add a delay before the computer move for better user experience
       this.gameManager.computerMoveTimeout = setTimeout(() => {
         this.currentBot.performComputerMove();
       }, 1000);
@@ -189,14 +210,17 @@ class GameManager {
     this.stateSnapeShot = null;
   }
 
+  // Set a snapshot of the current game state
   setStateSnapeShot() {
     this.stateSnapeShot = this.gameState.getStateSnapshot();
   }
 
+  // Set the UI manager
   setUIManager(uiManager) {
     this.uiManager = uiManager;
   }
 
+  // Set the preview for a split move
   setPreviewSplit(previewSplit) {
     const [hand1, hand2] = previewSplit.getHands();
 
@@ -212,14 +236,17 @@ class GameManager {
     this.uiManager.updateAllHands();
   }
 
+  // Set the bot type
   setBotType(botType) {
     this.botManager.setBot(botType);
   }
 
+  // Set the draggable manager
   setDraggableManager(draggableManager) {
     this.draggableManager = draggableManager;
   }
 
+  // Initialize the game
   initializeGame() {
     if (this.uiManager) {
       this.stateSnapeShot = this.gameState.getStateSnapshot();
@@ -229,10 +256,12 @@ class GameManager {
     }
   }
 
+  // Get the value of a specific hand
   getHandValue(handId) {
     return this.handManager.getHandValue(handId);
   }
 
+  // Set the value of a specific hand
   setHandValue(handId, value) {
     this.handManager.setHandValue(handId, value);
     const handElement = document.getElementById(handId);
@@ -244,11 +273,13 @@ class GameManager {
     this.uiManager.updateHandImage(handId);
   }
 
+  // Check if it's the current player's turn
   isCurrentPlayerTurn(handId) {
     const [playerId] = this.handManager.parseHandId(handId);
     return playerId === this.gameState.currentPlayer;
   }
 
+  // Check if the game has ended
   checkGameEnd() {
     const winner = this.gameState.checkGameEnd();
     if (winner) {
@@ -259,6 +290,7 @@ class GameManager {
     return false;
   }
 
+  // Reset the game
   resetGame(difficulty) {
     this.gameState.switchStartingPlayer();
     this.gameState.reset();
@@ -277,19 +309,23 @@ class GameManager {
     this.uiManager.setSplitButtonState(false);
   }
 
+  // Switch turns between players
   switchTurn() {
     this.gameState.switchTurn();
     this.uiManager.updateTurnIndicator();
   }
 
+  // Calculate the sum of two hands
   calculateSum(handId1, handId2) {
     return this.handManager.calculateSum(handId1, handId2);
   }
 
+  // Get all valid distributions for splitting
   getAllValidDistributions() {
     return this.handManager.getAllValidDistributions(this.stateSnapeShot);
   }
 
+  // Execute a move
   executeMove(move) {
     if (move.isValid()) {
       move.execute();
@@ -408,36 +444,20 @@ class DraggableManager {
 
     document.querySelectorAll(".draggable").forEach((otherElement) => {
       if (
-        //not the same element
         otherElement !== element &&
-        //if they are overlapping
-        this.isOverlapping(element, otherElement) &&
-        // if the other hand is not equal to 0
-        this.gameManager.getHandValue(otherElement.id) !== 0 &&
-        //check if the two hands are on the same player
-        this.gameManager.handManager.parseHandId(element.id)[0] !==
-          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
-        this.gameManager.previewSplit === null
+        this.isOverlapping(element, otherElement)
       ) {
-        // then
-        isOverlapping = true;
-        const sum = this.gameManager.calculateSum(element.id, otherElement.id);
-        this.uiManager.updateHandPreview(otherElement, sum);
-      } else if (
-        otherElement !== element &&
-        this.isOverlapping(element, otherElement) &&
-        this.gameManager.handManager.parseHandId(element.id)[0] ===
-          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
-        this.gameManager.getHandValue(otherElement.id) !== 4
-      ) {
-        isOverlapping = true;
-        const elementValue = this.gameManager.getHandValue(element.id);
-        const otherElementValue = this.gameManager.getHandValue(
-          otherElement.id
-        );
-
-        this.uiManager.updateHandPreview(element, elementValue - 1);
-        this.uiManager.updateHandPreview(otherElement, otherElementValue + 1);
+        if (this.canAddHands(element, otherElement)) {
+          isOverlapping = true;
+          const sum = this.gameManager.calculateSum(
+            element.id,
+            otherElement.id
+          );
+          this.uiManager.updateHandPreview(otherElement, sum);
+        } else if (this.canSplitHands(element, otherElement)) {
+          isOverlapping = true;
+          this.updateSplitPreview(element, otherElement);
+        }
       }
     });
 
@@ -446,58 +466,94 @@ class DraggableManager {
     }
   }
 
-  // Commit changes if the dragged element overlaps with another element
+  // Commit changes if there's an overlap after dragging
   commitChangesOnOverlap(element) {
     let changeCommitted = false;
+
     document.querySelectorAll(".draggable").forEach((otherElement) => {
       if (
         otherElement !== element &&
-        this.isOverlapping(element, otherElement) &&
-        this.gameManager.handManager.parseHandId(element.id)[0] !==
-          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
-        this.gameManager.previewSplit === null
+        this.isOverlapping(element, otherElement)
       ) {
-        const move = new MoveAdd(this.gameManager, element.id, otherElement.id);
-        if (move.isValid()) {
-          this.gameManager.executeMove(move);
-          changeCommitted = true;
-          this.uiManager.clearPreviews();
+        if (this.canAddHands(element, otherElement)) {
+          changeCommitted = this.executeAddMove(element, otherElement);
+        } else if (this.canSplitHands(element, otherElement)) {
+          changeCommitted = this.executeSplitMove(element, otherElement);
         }
-      } else if (
-        otherElement !== element &&
-        this.isOverlapping(element, otherElement) &&
-        this.gameManager.handManager.parseHandId(element.id)[0] ===
-          this.gameManager.handManager.parseHandId(otherElement.id)[0] &&
-        this.gameManager.getHandValue(otherElement.id) !== 4
-      ) {
-        let split = null;
-        const elementValue = this.gameManager.getHandValue(element.id);
-        const otherElementValue = this.gameManager.getHandValue(
-          otherElement.id
-        );
-        if (
-          this.gameManager.handManager.parseHandId(element.id)[1] === "leftHand"
-        ) {
-          split = new MoveSplit(
-            this.gameManager,
-            elementValue - 1,
-            otherElementValue + 1
-          );
-        } else {
-          split = new MoveSplit(
-            this.gameManager,
-            otherElementValue + 1,
-            elementValue - 1
-          );
-        }
-
-        if (split) {
-          this.gameManager.setPreviewSplit(split);
-        }
-        this.uiManager.clearPreviews();
       }
     });
+
     return changeCommitted;
+  }
+
+  // Check if hands can be added
+  canAddHands(element, otherElement) {
+    return (
+      !this.isSamePlayer(element, otherElement) &&
+      this.gameManager.getHandValue(otherElement.id) !== 0 &&
+      this.gameManager.previewSplit === null
+    );
+  }
+
+  // Check if hands can be split
+  canSplitHands(element, otherElement) {
+    return (
+      this.isSamePlayer(element, otherElement) &&
+      this.gameManager.getHandValue(otherElement.id) !== 4
+    );
+  }
+
+  // Check if two elements belong to the same player
+  isSamePlayer(element1, element2) {
+    const player1 = this.gameManager.handManager.parseHandId(element1.id)[0];
+    const player2 = this.gameManager.handManager.parseHandId(element2.id)[0];
+    return player1 === player2;
+  }
+
+  // Update the preview for a split move
+  updateSplitPreview(element, otherElement) {
+    const elementValue = this.gameManager.getHandValue(element.id);
+    const otherElementValue = this.gameManager.getHandValue(otherElement.id);
+    this.uiManager.updateHandPreview(element, elementValue - 1);
+    this.uiManager.updateHandPreview(otherElement, otherElementValue + 1);
+  }
+
+  // Execute an add move
+  executeAddMove(element, otherElement) {
+    const move = new MoveAdd(this.gameManager, element.id, otherElement.id);
+    if (move.isValid()) {
+      this.gameManager.executeMove(move);
+      this.uiManager.clearPreviews();
+      return true;
+    }
+    return false;
+  }
+
+  // Execute a split move
+  executeSplitMove(element, otherElement) {
+    const split = this.createSplitMove(element, otherElement);
+    if (split) {
+      this.gameManager.setPreviewSplit(split);
+      this.uiManager.clearPreviews();
+      return true;
+    }
+    return false;
+  }
+
+  // Create a split move
+  createSplitMove(element, otherElement) {
+    const elementValue = this.gameManager.getHandValue(element.id);
+    const otherElementValue = this.gameManager.getHandValue(otherElement.id);
+    const isLeftHand =
+      this.gameManager.handManager.parseHandId(element.id)[1] === "leftHand";
+
+    return isLeftHand
+      ? new MoveSplit(this.gameManager, elementValue - 1, otherElementValue + 1)
+      : new MoveSplit(
+          this.gameManager,
+          otherElementValue + 1,
+          elementValue - 1
+        );
   }
 
   // Check if two elements are overlapping
@@ -681,61 +737,65 @@ class UIManager {
   }
 }
 
-class Move {
-  constructor(gameManager) {
-    this.gameManager = gameManager;
-  }
-
-  isValid() {
-    return true;
-  }
-
-  execute() {
-    return true;
-  }
-}
-
-class MoveAdd extends Move {
+class MoveAdd {
   constructor(gameManager, sourceHandId, targetHandId) {
-    super(gameManager);
-    this.sourceHandId = sourceHandId;
-    this.targetHandId = targetHandId;
+    this.gameManager = gameManager;     
+    this.sourceHandId = sourceHandId;   // ID of the hand performing the action
+    this.targetHandId = targetHandId;   // ID of the hand receiving the action
   }
 
+  // Check if the move is valid
   isValid() {
+    // Parse the player IDs from the hand IDs
     const [sourcePlayerId] = this.gameManager.handManager.parseHandId(
       this.sourceHandId
     );
     const [targetPlayerId] = this.gameManager.handManager.parseHandId(
       this.targetHandId
     );
+
+    // Get the current values of the source and target hands
     const sourceValue = this.gameManager.getHandValue(this.sourceHandId);
     const targetValue = this.gameManager.getHandValue(this.targetHandId);
 
+    // A move is valid if:
+    // 1. The source and target belong to different players
+    // 2. The source hand has a non-zero value
+    // 3. The target hand is not already "dead" (value of 0)
     return (
       sourcePlayerId !== targetPlayerId && sourceValue > 0 && targetValue !== 0
     );
   }
 
+  // Execute the move
   execute() {
+    // Get the current values of the source and target hands
     const sourceValue = this.gameManager.getHandValue(this.sourceHandId);
     const targetValue = this.gameManager.getHandValue(this.targetHandId);
+
+    // Calculate the sum of the two hand values
     const sum = sourceValue + targetValue;
+
+    // Set the new value of the target hand
+    // If the sum is 5 or greater, the hand "dies" (becomes 0)
+    // Otherwise, it takes on the sum value
     this.gameManager.setHandValue(this.targetHandId, sum >= 5 ? 0 : sum);
   }
 }
 
-class MoveSplit extends Move {
+class MoveSplit {
   constructor(gameManager, newLeft, newRight) {
-    super(gameManager);
+    this.gameManager = gameManager;
     this.newLeft = newLeft;
     this.newRight = newRight;
   }
 
+  // Get the new hand values after the split
   getHands() {
     return [this.newLeft, this.newRight];
   }
 
+  // Check if the split move is valid
   isValid() {
     const validSplits = this.gameManager.getAllValidDistributions();
     return validSplits.some(
@@ -745,6 +805,7 @@ class MoveSplit extends Move {
     );
   }
 
+  // Execute the split move
   execute() {
     if (this.isValid()) {
       const currentPlayer = this.gameManager.gameState.getCurrentPlayer();
@@ -756,11 +817,13 @@ class MoveSplit extends Move {
     }
   }
 }
+
 class computerBot {
   constructor(gameManager) {
     this.gameManager = gameManager;
   }
 
+  // Get the current state of both players' hands
   getHandStates() {
     const players = this.gameManager.gameState.getStateSnapshot();
     const player1 = players.player1;
@@ -770,6 +833,7 @@ class computerBot {
     return [player1State, player2State];
   }
 
+  // Animate an add move
   animateAddMove(sourceHand, targetHand, callback) {
     const sourceElement = document.getElementById(sourceHand);
     const targetClass =
@@ -785,6 +849,7 @@ class computerBot {
     }, 500);
   }
 
+  // Animate a split move
   animateSplitMove(callback) {
     const leftHand = document.getElementById("topLeft");
     const rightHand = document.getElementById("topRight");
@@ -812,8 +877,10 @@ class randomComputerBot extends computerBot {
     super(gameManager);
   }
 
+  // Main method to perform a random computer move
   performComputerMove() {
     const players = this.gameManager.gameState.getStateSnapshot();
+    // Randomly choose between a split move or an add move
     const random = Math.floor(Math.random() * 2);
     if (random === 0) {
       this.performSplitMove();
@@ -822,62 +889,96 @@ class randomComputerBot extends computerBot {
     }
   }
 
+  // Perform a random split move
   performSplitMove() {
+    // Get all valid split moves
     const validSplits = this.gameManager.getAllValidDistributions();
+    
+    // If no valid splits are available, perform an add move instead
     if (validSplits.length === 0 && !this.gameManager.checkGameEnd()) {
       this.performAddMove();
       return;
     }
+    
+    // Choose a random split from the valid splits
     const split = validSplits[Math.floor(Math.random() * validSplits.length)];
 
+    // Create and execute the split move
     const move = new MoveSplit(this.gameManager, split[0], split[1]);
     if (move.isValid() && !this.gameManager.checkGameEnd()) {
+      // Animate the split move and then execute it
       this.animateSplitMove(() => {
         this.gameManager.executeMove(move);
       });
     } else if (!this.gameManager.checkGameEnd()) {
+      // If the split move is invalid, try an add move instead
       this.performAddMove();
     }
   }
 
+  // Perform a random add move
   performAddMove() {
+    // Define the possible hands for the computer and player
     const computerHands = ["topLeft", "topRight"];
     const playerHands = ["bottomLeft", "bottomRight"];
+    
+    // Choose a random hand for the computer and player
     const computerHand = computerHands[Math.floor(Math.random() * 2)];
     const playerHand = playerHands[Math.floor(Math.random() * 2)];
 
+    // Create and execute the add move
     const move = new MoveAdd(this.gameManager, computerHand, playerHand);
     if (move.isValid() && !this.gameManager.checkGameEnd()) {
+      // Animate the add move and then execute it
       this.animateAddMove(computerHand, playerHand, () => {
         this.gameManager.executeMove(move);
       });
     } else if (!this.gameManager.checkGameEnd()) {
+      // If the add move is invalid, try again with a different random move
       this.performAddMove();
     }
   }
 }
 
-class MinimaxBot extends computerBot {
+class MixedBot extends computerBot {
   constructor(gameManager) {
     super(gameManager);
-    this.depth = 15;
+    this.randomBot = new randomComputerBot(gameManager);
+    this.minimaxBot = new MinimaxBot(gameManager, 4);
   }
 
   performComputerMove() {
+    const random = Math.floor(Math.random() * 10);
+    if (random < 4) {
+      this.randomBot.performComputerMove();
+    } else {
+      this.minimaxBot.performComputerMove();
+    }
+  }
+}
+
+class MinimaxBot extends computerBot {
+  constructor(gameManager, depth) {
+    super(gameManager);
+    this.depth = depth; // Maximum depth for the minimax algorithm
+  }
+
+  // Main method to perform the computer's move
+  performComputerMove() {
+    // Get the current game state
     const state = {
       player1: this.gameManager.gameState.getStateSnapshot().player1,
       player2: this.gameManager.gameState.getStateSnapshot().player2,
-      isPlayer1Turn: true, // The bot is always player1 in our representation
+      isPlayer1Turn: true, // The bot is always player1
     };
+    // Find the best move using minimax algorithm
     const bestMove = this.minimax(state, this.depth, true);
 
-    console.log(bestMove);
-
     if (!bestMove.move) {
-      console.log("No valid moves available or game is over");
       return;
     }
 
+    // Execute the best move
     if (bestMove.move.type === "add") {
       const sourceHand =
         "top" +
@@ -907,20 +1008,33 @@ class MinimaxBot extends computerBot {
     }
   }
 
-  minimax(state, depth, isMaximizingPlayer, alpha = -Infinity, beta = Infinity) {
+  // Minimax algorithm with alpha-beta pruning
+  minimax(
+    state,
+    depth,
+    isMaximizingPlayer,
+    alpha = -Infinity,
+    beta = Infinity
+  ) {
+    // Base case: return the evaluation if depth is 0 or game is over
     if (depth === 0 || this.isGameOver(state)) {
       return { score: this.evaluateState(state) };
     }
 
     const moves = this.getAllPossibleMoves(state);
-
     let bestMove = null;
 
     if (isMaximizingPlayer) {
       let maxEval = -Infinity;
       for (const move of moves) {
         const newState = this.applyMove(state, move);
-        const evaluation = this.minimax(newState, depth - 1, false, alpha, beta).score;
+        const evaluation = this.minimax(
+          newState,
+          depth - 1,
+          false,
+          alpha,
+          beta
+        ).score;
         if (evaluation > maxEval) {
           maxEval = evaluation;
           bestMove = move;
@@ -935,7 +1049,13 @@ class MinimaxBot extends computerBot {
       let minEval = Infinity;
       for (const move of moves) {
         const newState = this.applyMove(state, move);
-        const evaluation = this.minimax(newState, depth - 1, true, alpha, beta).score;
+        const evaluation = this.minimax(
+          newState,
+          depth - 1,
+          true,
+          alpha,
+          beta
+        ).score;
         if (evaluation < minEval) {
           minEval = evaluation;
           bestMove = move;
@@ -949,6 +1069,7 @@ class MinimaxBot extends computerBot {
     }
   }
 
+  // Check if the game is over (one player has no fingers left)
   isGameOver(state) {
     return (
       (state.player1.leftHand === 0 && state.player1.rightHand === 0) ||
@@ -956,82 +1077,76 @@ class MinimaxBot extends computerBot {
     );
   }
 
+  // Evaluate the current state of the game
   evaluateState(state) {
+    const { player1, player2, isPlayer1Turn } = state;
+
+    // Check for immediate win or loss
+    if (this.isPlayerDefeated(player2)) return 100;
+    if (this.isPlayerDefeated(player1)) return -100;
+
     let score = 0;
 
-    //check for immediate win or loss
-    if (state.player2.leftHand === 0 && state.player2.rightHand === 0) {
-      return 100;
-    } else if (state.player1.leftHand === 0 && state.player1.rightHand === 0) {
-      return -100;
-    }
+    // Evaluate vulnerable states
+    score += this.evaluateVulnerableState(player1, player2, isPlayer1Turn);
 
-    //check if the bot has a 0,1 state and its not their turn and the opponent doesn't has a 0,1 state
-    if(
-      state.player1.leftHand + state.player1.rightHand <= 1 &&
-      !state.isPlayer1Turn &&
-      state.player2.leftHand + state.player2.rightHand > 1
-    ) {
-      score -= 10;
-    }
-
-    //check if the opponent has a 0,1 state and its not the bot's turn and the bot doesn't has a 0,1 state
-    if(
-      state.player2.leftHand + state.player2.rightHand <= 1 &&
-      !state.isPlayer1Turn &&
-      state.player1.leftHand + state.player1.rightHand > 1
-    ) {
-      score += 10;
-    }
-
-    //check if the bot has a 0,1 state and its their turn and the opponent doesn't has a 0,1 state
-    if(
-      state.player1.leftHand + state.player1.rightHand <= 1 &&
-      state.isPlayer1Turn &&
-      state.player2.leftHand + state.player2.rightHand > 1
-    ) {
-      score -= 10;
-    }
-
-    //check if the opponent has a 0,1 state and its the bot's turn and the bot doesn't has a 0,1 state
-    if(
-      state.player2.leftHand + state.player2.rightHand <= 1 &&
-      state.isPlayer1Turn &&
-      state.player1.leftHand + state.player1.rightHand > 1
-    ) {
-      score += 10;
-    }
-
-    //check if you have the ability to win in the next move
-    //check if the player only has 1 hand left and the other hand is 0
-    if(state.player2.leftHand === 0 && state.isPlayer1Turn) {
-      if(state.player1.leftHand + state.player2.rightHand > 4 || state.player1.rightHand + state.player2.rightHand > 4) {
-        score += 100;
-      }
-    }
-
-    if(state.player2.rightHand === 0 && state.isPlayer1Turn) {
-      if(state.player1.leftHand + state.player2.leftHand > 4 || state.player1.rightHand + state.player2.leftHand > 4) {
-        score += 100;
-      }
-    }
-
-    if(state.player1.leftHand === 0 && !state.isPlayer1Turn) {
-      if(state.player2.leftHand + state.player2.rightHand > 4 || state.player2.rightHand + state.player2.rightHand > 4) {
-        score -= 100;
-      }
-    }
-
-    if(state.player1.rightHand === 0 && !state.isPlayer1Turn) {
-      if(state.player2.leftHand + state.player1.leftHand > 4 || state.player2.rightHand + state.player1.leftHand > 4) {
-        score -= 100;
-      }
-    }
+    // Evaluate winning potential
+    score += this.evaluateWinningPotential(player1, player2, isPlayer1Turn);
 
     return score;
-
   }
 
+  // Check if a player is defeated (has no fingers left)
+  isPlayerDefeated(player) {
+    return player.leftHand === 0 && player.rightHand === 0;
+  }
+
+  // Get the total number of fingers for a player
+  getTotalFingers(player) {
+    return player.leftHand + player.rightHand;
+  }
+
+  // Check if a player is in a vulnerable state (1 or fewer total fingers)
+  isVulnerable(player) {
+    return this.getTotalFingers(player) <= 1;
+  }
+
+  // Evaluate the state based on player vulnerability
+  evaluateVulnerableState(player1, player2, isPlayer1Turn) {
+    let score = 0;
+    const botVulnerable = this.isVulnerable(player1);
+    const opponentVulnerable = this.isVulnerable(player2);
+
+    if (botVulnerable && !opponentVulnerable) {
+      score -= 10;
+    } else if (opponentVulnerable && !botVulnerable) {
+      score += 10;
+    }
+
+    // Adjust score based on whose turn it is
+    return isPlayer1Turn ? -score : score;
+  }
+
+  // Check if a player can win in the next move
+  canWinNextMove(attacker, defender) {
+    const totalFingers = this.getTotalFingers(attacker);
+    return (
+      (defender.leftHand === 0 && totalFingers + defender.rightHand > 4) ||
+      (defender.rightHand === 0 && totalFingers + defender.leftHand > 4)
+    );
+  }
+
+  // Evaluate the winning potential of the current state
+  evaluateWinningPotential(player1, player2, isPlayer1Turn) {
+    if (isPlayer1Turn && this.canWinNextMove(player1, player2)) {
+      return 100;
+    } else if (!isPlayer1Turn && this.canWinNextMove(player2, player1)) {
+      return -100;
+    }
+    return 0;
+  }
+
+  // Generate all possible moves for the current state
   getAllPossibleMoves(state) {
     const moves = [];
     const player = state.isPlayer1Turn ? state.player1 : state.player2;
@@ -1049,7 +1164,7 @@ class MinimaxBot extends computerBot {
       }
     };
 
-    // Add moves
+    // Generate add moves
     if (player.leftHand !== 0) {
       if (opponent.leftHand !== 0)
         addMoveIfUnique({ type: "add", from: "left", to: "left" });
@@ -1063,7 +1178,7 @@ class MinimaxBot extends computerBot {
         addMoveIfUnique({ type: "add", from: "right", to: "right" });
     }
 
-    // Split moves
+    // Generate split moves
     const totalFingers = player.leftHand + player.rightHand;
     for (let left = 0; left <= Math.floor(totalFingers / 2); left++) {
       const right = totalFingers - left;
@@ -1071,9 +1186,10 @@ class MinimaxBot extends computerBot {
         right >= 0 &&
         right <= 4 &&
         // new unique state that is not symmetrical to original
-        (left !== player.leftHand && right !== player.rightHand) &&
-        (left !== player.rightHand && right !== player.leftHand)
-
+        left !== player.leftHand &&
+        right !== player.rightHand &&
+        left !== player.rightHand &&
+        right !== player.leftHand
       ) {
         addMoveIfUnique({ type: "split", left, right });
       }
@@ -1082,17 +1198,20 @@ class MinimaxBot extends computerBot {
     return moves;
   }
 
+  // Get a unique key for a state, considering symmetry
   getSymmetricStateKey(state) {
     const p1 = this.getSymmetricHandKey(state.player1);
     const p2 = this.getSymmetricHandKey(state.player2);
     return `${p1}|${p2}|${state.isPlayer1Turn}`;
   }
 
+  // Get a unique key for a player's hands, considering symmetry
   getSymmetricHandKey(player) {
     const hands = [player.leftHand, player.rightHand].sort();
     return hands.join(",");
   }
 
+  // Apply a move to the current state and return the new state
   applyMove(state, move) {
     const newState = JSON.parse(JSON.stringify(state));
     const player = newState.isPlayer1Turn ? newState.player1 : newState.player2;
@@ -1103,7 +1222,8 @@ class MinimaxBot extends computerBot {
     if (move.type === "add") {
       const sourceValue = player[move.from + "Hand"];
       const targetValue = opponent[move.to + "Hand"];
-      opponent[move.to + "Hand"] = (sourceValue + targetValue) >= 5 ? 0 : (sourceValue + targetValue);
+      opponent[move.to + "Hand"] =
+        sourceValue + targetValue >= 5 ? 0 : sourceValue + targetValue;
     } else if (move.type === "split") {
       player.leftHand = move.left;
       player.rightHand = move.right;
