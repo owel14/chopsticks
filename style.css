@@ -30,15 +30,13 @@
   align-items: center;
   justify-content: center;
   cursor: grab;
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   float: right;
-  margin: 40px 60px 40px 60px;
 }
 
-
 .non-draggable {
-  cursor: initial; /* or any other style to indicate non-draggable */
+  cursor: initial;
 }
 
 .draggableContainer img {
@@ -57,21 +55,28 @@
   transform: scaleX(-1);
 }
 
-#bottomLeft  {
-  margin: 40px 60px 0px 60px;
+#topLeft {
+  margin: 40px 60px 20px 60px;
 }
 
-#bottomRight  {
-  margin: 40px 60px 0px 60px;
+#topRight {
+  margin: 40px 60px 20px 60px;
 }
 
-/* Ensure hrContainer is a flex item */
+#bottomLeft {
+  margin: 20px 60px 0px 60px;
+}
+
+#bottomRight {
+  margin: 20px 60px 0px 60px;
+}
+
 .hrContainer {
   display: flex;
   justify-content: center;
   width: 100vw;
 }
-/* Style for hr element */
+
 hr {
   width: 100vw;
   border: none;
@@ -199,95 +204,100 @@ body {
   background-color: white;
   width: 80%;
   max-width: 500px; /* Adjust as needed */
-  padding: 20px;
   height: fit-content;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   align-items: center;
+  text-align: center;
 }
 
 .info-content h3 {
   font-size: 28px;
-  text-align: center;
 }
 
 .info-content p {
   margin-bottom: 10px;
-  text-align: center;
 }
 
-.info-content ul {
-  margin-bottom: 10px;
+.info-content img {
+  width: 50%;
 }
 
-.info-content li {
-  margin-bottom: 5px;
+.infoHeader {
+  position: relative;
+}
+
+.tutorialContent {
+  padding: 0px 20px 20px 20px;
+}
+
+.gifWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 5px;
 }
 
 #closeInfo {
-  padding: 15px;
-  padding-left: 20px;
-  padding-right: 20px;
+  position: absolute;
+  right: 20px;
+  top: 8px;
   font-size: 18px;
   background-color: #55c2da;
+  padding: 5px 10px 5px 10px;
   color: white;
   border: none;
-  border-radius: 30px;
+  border-radius: 10px;
   transition: background-color 0.3s ease;
-  margin-top: 30px;
-  margin-left: auto;
-  margin-right: auto;
   display: block;
 }
+  #closeInfo:hover {
+    background-color: #4681f4;
+    cursor: pointer;
+  }
 
-#closeInfo:hover {
-  background-color: #4681f4;
-  cursor: pointer;
-}
+  #youWinPopup {
+    display: none;
+    position: fixed;
+    flex-direction: column;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    z-index: 1000;
+    position: fixed;
+  }
 
-#youWinPopup {
-  display: none;
-  position: fixed;
-  flex-direction: column;
-  top: 50%; /* Center vertically */
-  left: 50%; /* Center horizontally */
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  justify-content: center;
-  text-align: center;
-  align-items: center;
-  z-index: 1000;
-  position: fixed;
-}
+  #youWinPopup.popup {
+    background-color: white;
+    border: black 1px solid;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    position: fixed;
+  }
 
-#youWinPopup.popup {
-  background-color: white;
-  border: black 1px solid;
-  padding: 40px;
-  border-radius: 20px;
-  text-align: center;
-  position: fixed;
-}
+  #youWinPopup.popup h2 {
+    margin-bottom: 40px;
+    font-size: 18px;
+  }
 
-#youWinPopup.popup h2 {
-  margin-bottom: 40px;
-  font-size: 18px;
-}
+  #youWinPopup.popup button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #55c2da;
+    color: white;
+    border: none;
+    margin-top: auto;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 0px;
+  }
 
-#youWinPopup.popup button {
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #55c2da;
-  color: white;
-  border: none;
-  margin-top: auto;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-bottom: 0px;
-}
-
-#splitButton {
+  #splitButton {
     font-size: 20px;
     background-color: #55c2da;
     color: white;
@@ -296,89 +306,94 @@ body {
     border-radius: 5px;
     cursor: pointer;
     margin: 0px 10px 40px 10px;
-    transition: background-color 0.3s ease
-}
+    transition: background-color 0.3s ease;
+  }
 
-#splitButton:hover {
-  background-color: #4681f4;
-}
+  #splitButton:hover {
+    background-color: #4681f4;
+  }
 
-.active-player {
-  border-radius: 25px;
-  padding: 10px;
-  padding-left: 20px;
-  padding-right: 20px;
-  background-color: #a3eaaa;
-}
+  .active-player {
+    border-radius: 25px;
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: #a3eaaa;
+  }
 
-.text {
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.non-draggable {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.hand {
-  transition: transform 0.5s ease-in-out;
-}
-
-.move-towards-bottom-left {
-  transform: translate(50px, 50px) !important;
-}
-
-.move-towards-bottom-right {
-  transform: translate(-50px, 50px) !important;
-}
-
-.move-towards-center {
-  transform: translate(0, -25px) !important;
-}
-
-.move-away-from-center {
-  transform: translate(0, 25px) !important;
-}
-
-@media only screen and (min-width: 1024px) {
-}
-
-@media only screen and (min-width: 720px) {
-}
-
-@media only screen and (max-width: 480px) {
-  .draggable {
+  .text {
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: grab;
-    width: 100px;
-    height: 100px;
-    float: right;
-  }
-  #topLeft {
-    margin:40px 60px 0px 0px;
-  }
-  
-  #topRight {
-    margin:40px 0px 0px 60px;
-  }
-  
-  #bottomLeft {
-    margin:20px 60px 0px 0px;
-  }
-  
-  #bottomRight {
-    margin:20px 0px 0px 60px;
   }
 
-  .difficulty-selection label {
-    display: flex;
-    align-items: center;
-    margin: 0px 10px 0px 10px;
-    font-size: 14px;
+  .non-draggable {
+    opacity: 0.5;
+    cursor: default;
   }
-}
+
+  .hand {
+    transition: transform 0.5s ease-in-out;
+  }
+
+  .move-towards-bottom-left {
+    transform: translate(50px, 50px) !important;
+  }
+
+  .move-towards-bottom-right {
+    transform: translate(-50px, 50px) !important;
+  }
+
+  .move-towards-center {
+    transform: translate(0, -25px) !important;
+  }
+
+  .move-away-from-center {
+    transform: translate(0, 25px) !important;
+  }
+
+  @media only screen and (max-width: 540px) {
+    .infoHeader h3{
+      padding: 0px 60px
+    }
+
+    #closeinfo{
+      right:10px
+    }
+  }
+
+  @media only screen and (max-width: 480px) {
+    .draggable {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      width: 100px;
+      height: 100px;
+      float: right;
+    }
+    #topLeft {
+      margin: 40px 60px 0px 0px;
+    }
+
+    #topRight {
+      margin: 40px 0px 0px 60px;
+    }
+
+    #bottomLeft {
+      margin: 20px 60px 0px 0px;
+    }
+
+    #bottomRight {
+      margin: 20px 0px 0px 60px;
+    }
+
+    .difficulty-selection label {
+      display: flex;
+      align-items: center;
+      margin: 0px 10px 0px 10px;
+      font-size: 14px;
+    }
+
+  }
