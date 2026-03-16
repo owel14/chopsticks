@@ -3,6 +3,7 @@
 import { useState } from "react";
 import GameBoard from "@/components/GameBoard";
 import DifficultyModal from "@/components/modals/DifficultyModal";
+import OnlineLobbyModal from "@/components/modals/OnlineLobbyModal";
 import WinnerModal from "@/components/modals/WinnerModal";
 import TutorialModal from "@/components/modals/TutorialModal";
 import { useGame } from "@/lib/hooks/useGame";
@@ -20,6 +21,7 @@ export default function Home() {
   } = useGame();
 
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showOnlineLobby, setShowOnlineLobby] = useState(false);
 
   return (
     <main className="game-container">
@@ -40,8 +42,16 @@ export default function Home() {
         onConfirmSplit={confirmSplit}
       />
 
-      {gameState.phase === "selectDifficulty" && (
-        <DifficultyModal initialDifficulty={gameState.difficulty} onStart={startGame} />
+      {gameState.phase === "selectDifficulty" && !showOnlineLobby && (
+        <DifficultyModal
+          initialDifficulty={gameState.difficulty}
+          onStart={startGame}
+          onPlayOnline={() => setShowOnlineLobby(true)}
+        />
+      )}
+
+      {gameState.phase === "selectDifficulty" && showOnlineLobby && (
+        <OnlineLobbyModal onBack={() => setShowOnlineLobby(false)} />
       )}
 
       {gameState.phase === "gameOver" && gameState.winner && (

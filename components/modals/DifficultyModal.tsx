@@ -6,11 +6,12 @@ import type { Difficulty } from "@/lib/game/types";
 interface DifficultyModalProps {
   initialDifficulty: Difficulty;
   onStart: (difficulty: Difficulty) => void;
+  onPlayOnline?: () => void;
 }
 
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"];
 
-export default function DifficultyModal({ initialDifficulty, onStart }: DifficultyModalProps) {
+export default function DifficultyModal({ initialDifficulty, onStart, onPlayOnline }: DifficultyModalProps) {
   const [selected, setSelected] = useState<Difficulty>(initialDifficulty);
 
   return (
@@ -28,7 +29,13 @@ export default function DifficultyModal({ initialDifficulty, onStart }: Difficul
             </button>
           ))}
         </div>
-        <button onClick={() => onStart(selected)}>Play</button>
+        <button onClick={() => onStart(selected)}>Play vs AI</button>
+        {onPlayOnline && (
+          <>
+            <div className="lobby-divider"><span>or</span></div>
+            <button className="online-btn" onClick={onPlayOnline}>Play Online</button>
+          </>
+        )}
       </div>
     </div>
   );
