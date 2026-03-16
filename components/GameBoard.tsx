@@ -14,6 +14,8 @@ interface GameBoardProps {
   onExecuteAdd: (sourceHandId: HandId, targetHandId: HandId) => void;
   onSetPendingSplit: (split: PendingSplit | null) => void;
   onConfirmSplit: () => void;
+  opponentName?: string;
+  isOnline?: boolean;
 }
 
 // Returns the center of a DOMRect as {x, y}
@@ -28,6 +30,8 @@ export default function GameBoard({
   onExecuteAdd,
   onSetPendingSplit,
   onConfirmSplit,
+  opponentName = "Computer",
+  isOnline = false,
 }: GameBoardProps) {
   const isPlayerTurn = gameState.currentPlayer === "player2" && gameState.phase === "playing";
 
@@ -142,7 +146,7 @@ export default function GameBoard({
       {/* Computer */}
       <div className="player-section">
         <div className="player-header">
-          <header id="computer">Computer</header>
+          <header id="computer">{opponentName}</header>
         </div>
         <div className="draggable-container">
           {(["topLeft", "topRight"] as HandId[]).map((handId) => (
@@ -163,7 +167,7 @@ export default function GameBoard({
 
       <div className="turn-divider">
         <span className={`turn-badge${isPlayerTurn ? " turn-badge--player" : " turn-badge--computer"}`}>
-          {isPlayerTurn ? "Your turn" : "Computer thinking…"}
+          {isPlayerTurn ? "Your turn" : isOnline ? `${opponentName}'s turn` : "Computer thinking…"}
         </span>
       </div>
 

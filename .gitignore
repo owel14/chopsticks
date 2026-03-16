@@ -21,6 +21,10 @@ Thumbs.db
 .vscode/
 *.swp
 
+# .NET server build output
+server/bin/
+server/obj/
+
 # Claude Code
 .claude/
 CLAUDE.md
