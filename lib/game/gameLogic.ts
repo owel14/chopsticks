@@ -1,5 +1,4 @@
 import type { GameState, HandId, HandSide, PlayerId, PlayerState } from "./types";
-import { FINGERS_MOD, MAX_FINGERS } from "./constants";
 
 export function parseHandId(handId: HandId): [PlayerId, HandSide] {
   const match = handId.match(/^(top|bottom)(Left|Right)$/);
@@ -19,10 +18,6 @@ export function getHandValue(state: GameState, handId: HandId): number {
 
 export function isPlayerDefeated(player: PlayerState): boolean {
   return player.leftHand === 0 && player.rightHand === 0;
-}
-
-export function getTotalFingers(player: PlayerState): number {
-  return player.leftHand + player.rightHand;
 }
 
 export function checkWinner(state: GameState): PlayerId | null {
@@ -54,7 +49,7 @@ export function applyAddMove(
   const [targetPlayerId, targetHand] = parseHandId(targetHandId);
 
   const newState: GameState = JSON.parse(JSON.stringify(state));
-  newState.players[targetPlayerId][targetHand] = sum >= FINGERS_MOD ? 0 : sum;
+  newState.players[targetPlayerId][targetHand] = sum >= 5 ? 0 : sum;
   newState.currentPlayer = state.currentPlayer === "player1" ? "player2" : "player1";
 
   const winner = checkWinner(newState);
@@ -87,9 +82,9 @@ export function getAllValidDistributions(
   const seen = new Set<string>();
   const results: [number, number][] = [];
 
-  for (let i = 0; i <= MAX_FINGERS; i++) {
+  for (let i = 0; i <= 4; i++) {
     const j = total - i;
-    if (j < 0 || j > MAX_FINGERS) continue;
+    if (j < 0 || j > 4) continue;
     const key = `${Math.min(i, j)},${Math.max(i, j)}`;
     if (!seen.has(key)) {
       seen.add(key);

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { HandId, GameState, PendingSplit } from "@/lib/game/types";
+import type { HandId, GameState } from "@/lib/game/types";
+import type { PendingSplit } from "@/lib/hooks/useGame";
 import {
   parseHandId,
   getHandValue,

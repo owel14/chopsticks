@@ -38,13 +38,3 @@ export interface BotMinimaxState {
   player2: PlayerState;
   isPlayer1Turn: boolean;
 }
-
-export interface PendingSplit {
-  newLeft: number;
-  newRight: number;
-}
-
-export type AnimatingMove =
-  | { type: "add"; sourceHandId: HandId; targetHandId: HandId }
-  | { type: "split" }
-  | null;

@@ -8,9 +8,8 @@ import {
   getAllValidDistributions,
   isSplitMoveValid,
 } from "../game/gameLogic";
-import { getBotMove, botMoveToHandIds } from "../ai/bots";
-import { BOT_THINK_DELAY, ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "../game/constants";
-import type { Difficulty, GameState, HandId, AnimatingMove, PendingSplit } from "../game/types";
+import { getBotMove } from "../ai/bots";
+import type { Difficulty, GameState, HandId } from "../game/types";
 
 type Action =
   | { type: "START_GAME"; difficulty: Difficulty; nextStarting: "player1" | "player2" }
@@ -42,6 +41,16 @@ function gameReducer(state: GameState, action: Action): GameState {
   }
 }
 
+export interface PendingSplit {
+  newLeft: number;
+  newRight: number;
+}
+
+export type AnimatingMove =
+  | { type: "add"; sourceHandId: HandId; targetHandId: HandId }
+  | { type: "split" }
+  | null;
+
 export function useGame() {
   const [gameState, dispatch] = useReducer(gameReducer, createInitialGameState());
   const [pendingSplit, setPendingSplitState] = useState<PendingSplit | null>(null);
@@ -50,46 +59,40 @@ export function useGame() {
   const pendingSplitRef = useRef<PendingSplit | null>(null);
   pendingSplitRef.current = pendingSplit;
 
-  const gameStateRef = useRef(gameState);
-  gameStateRef.current = gameState;
-
   const setPendingSplit = useCallback((split: PendingSplit | null) => {
     setPendingSplitState(split);
   }, []);
 
   // AI turn
   useEffect(() => {
-    const gs = gameStateRef.current;
-    if (gs.phase !== "playing") return;
-    if (gs.currentPlayer !== "player1") return;
-    if (gs.isGameOver) return;
+    if (gameState.phase !== "playing") return;
+    if (gameState.currentPlayer !== "player1") return;
+    if (gameState.isGameOver) return;
 
     const outerTimeout = setTimeout(() => {
-      const currentGs = gameStateRef.current;
-      const move = getBotMove(currentGs, currentGs.difficulty);
+      const move = getBotMove(gameState, gameState.difficulty);
       if (!move) return;
 
       if (move.type === "add") {
-        const handIds = botMoveToHandIds(move);
-        if (!handIds) return;
-        const { sourceHandId, targetHandId } = handIds;
+        const sourceHandId = `top${move.from.charAt(0).toUpperCase()}${move.from.slice(1)}` as HandId;
+        const targetHandId = `bottom${move.to.charAt(0).toUpperCase()}${move.to.slice(1)}` as HandId;
 
         setAnimatingMove({ type: "add", sourceHandId, targetHandId });
         setTimeout(() => {
           setAnimatingMove(null);
           dispatch({ type: "EXECUTE_ADD", sourceHandId, targetHandId });
-        }, ADD_ANIMATION_MS);
+        }, 800);
       } else {
         setAnimatingMove({ type: "split" });
         setTimeout(() => {
           setAnimatingMove(null);
           dispatch({ type: "EXECUTE_SPLIT", newLeft: move.left, newRight: move.right });
-        }, SPLIT_ANIMATION_MS);
+        }, 650);
       }
-    }, BOT_THINK_DELAY);
+    }, 600);
 
     return () => clearTimeout(outerTimeout);
-  }, [gameState.currentPlayer, gameState.phase, gameState.isGameOver]);
+  }, [gameState.currentPlayer, gameState.phase, gameState.isGameOver]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startGame = useCallback(
     (difficulty: Difficulty) => {
