@@ -4,10 +4,12 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import {
   applyAddMove,
   applySplitMove,
+  botHandToHandId,
   createInitialGameState,
   getAllValidDistributions,
   isSplitMoveValid,
 } from "../game/gameLogic";
+import { BOT_THINK_DELAY, ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "../game/constants";
 import { getBotMove } from "../ai/bots";
 import type { Difficulty, GameState, HandId } from "../game/types";
 
@@ -59,6 +61,11 @@ export function useGame() {
   const pendingSplitRef = useRef<PendingSplit | null>(null);
   pendingSplitRef.current = pendingSplit;
 
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
+
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const setPendingSplit = useCallback((split: PendingSplit | null) => {
     setPendingSplitState(split);
   }, []);
@@ -70,29 +77,33 @@ export function useGame() {
     if (gameState.isGameOver) return;
 
     const outerTimeout = setTimeout(() => {
-      const move = getBotMove(gameState, gameState.difficulty);
+      const current = gameStateRef.current;
+      const move = getBotMove(current, current.difficulty);
       if (!move) return;
 
       if (move.type === "add") {
-        const sourceHandId = `top${move.from.charAt(0).toUpperCase()}${move.from.slice(1)}` as HandId;
-        const targetHandId = `bottom${move.to.charAt(0).toUpperCase()}${move.to.slice(1)}` as HandId;
+        const sourceHandId = botHandToHandId(move.from, "top");
+        const targetHandId = botHandToHandId(move.to, "bottom");
 
         setAnimatingMove({ type: "add", sourceHandId, targetHandId });
-        setTimeout(() => {
+        animTimerRef.current = setTimeout(() => {
           setAnimatingMove(null);
           dispatch({ type: "EXECUTE_ADD", sourceHandId, targetHandId });
-        }, 800);
+        }, ADD_ANIMATION_MS);
       } else {
         setAnimatingMove({ type: "split" });
-        setTimeout(() => {
+        animTimerRef.current = setTimeout(() => {
           setAnimatingMove(null);
           dispatch({ type: "EXECUTE_SPLIT", newLeft: move.left, newRight: move.right });
-        }, 650);
+        }, SPLIT_ANIMATION_MS);
       }
-    }, 600);
+    }, BOT_THINK_DELAY);
 
-    return () => clearTimeout(outerTimeout);
-  }, [gameState.currentPlayer, gameState.phase, gameState.isGameOver]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      clearTimeout(outerTimeout);
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
+    };
+  }, [gameState.currentPlayer, gameState.phase, gameState.isGameOver]);
 
   const startGame = useCallback(
     (difficulty: Difficulty) => {

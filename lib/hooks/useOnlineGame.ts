@@ -5,6 +5,7 @@ import { HubConnectionBuilder, HubConnection, LogLevel } from "@microsoft/signal
 import type { GameState, HandId, PlayerId, PlayerState } from "../game/types";
 import type { PendingSplit, AnimatingMove } from "./useGame";
 import { applyAddMove, applySplitMove, getAllValidDistributions, isSplitMoveValid } from "../game/gameLogic";
+import { ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "../game/constants";
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
 
@@ -42,11 +43,11 @@ function translateState(serverState: ServerGameState, myPlayerId: PlayerId): Gam
         player2: { ...serverState.player2 },
       },
       currentPlayer: serverState.currentPlayer as PlayerId,
-      startingPlayer: "player2",
+      startingPlayer: "player2", // placeholder — unused in online mode
       isGameOver: serverState.isGameOver,
       winner: serverState.winner as PlayerId | null,
       phase: serverState.isGameOver ? "gameOver" : "playing",
-      difficulty: "easy",
+      difficulty: "easy", // placeholder — unused in online mode
     };
   }
 
@@ -57,13 +58,13 @@ function translateState(serverState: ServerGameState, myPlayerId: PlayerId): Gam
       player2: { ...serverState.player1 },
     },
     currentPlayer: (serverState.currentPlayer === "player1" ? "player2" : "player1") as PlayerId,
-    startingPlayer: "player2",
+    startingPlayer: "player2", // placeholder — unused in online mode
     isGameOver: serverState.isGameOver,
     winner: serverState.winner
       ? ((serverState.winner === "player1" ? "player2" : "player1") as PlayerId)
       : null,
     phase: serverState.isGameOver ? "gameOver" : "playing",
-    difficulty: "easy",
+    difficulty: "easy", // placeholder — unused in online mode
   };
 }
 
@@ -140,14 +141,14 @@ export function useOnlineGame(
       }
     );
 
-    connection.on("GameStateUpdated", (serverState: ServerGameState, moveInfo: MoveInfo) => {
+    connection.on("GameStateUpdated", (serverState: ServerGameState, moveInfo?: MoveInfo) => {
       const myId = myPlayerIdRef.current;
       if (!myId) return;
 
       const translated = translateState(serverState, myId);
-      const isOpponentMove = moveInfo.moverId !== myId;
+      const isOpponentMove = moveInfo ? moveInfo.moverId !== myId : false;
 
-      if (isOpponentMove) {
+      if (isOpponentMove && moveInfo) {
         // Animate opponent's move before applying state
         if (moveInfo.type === "add" && moveInfo.fromHand && moveInfo.toHand) {
           const sourceHandId = (moveInfo.fromHand === "left" ? "topLeft" : "topRight") as HandId;
@@ -157,7 +158,8 @@ export function useOnlineGame(
           setAnimatingMove({ type: "split" });
         }
 
-        const delay = moveInfo.type === "add" ? 800 : 650;
+        const delay = moveInfo.type === "add" ? ADD_ANIMATION_MS : SPLIT_ANIMATION_MS;
+        if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
         animationTimerRef.current = setTimeout(() => {
           setAnimatingMove(null);
           setGameState(translated);

@@ -51,10 +51,19 @@ public class GameHub : Hub
 
         var player = room.GetPlayerByConnectionId(Context.ConnectionId);
         if (player == null) return;
-        if (room.GameState.CurrentPlayer != player.PlayerId) return;
+
+        if (room.GameState.CurrentPlayer != player.PlayerId)
+        {
+            await Clients.Caller.SendAsync("Error", "It is not your turn.");
+            return;
+        }
 
         var newState = GameLogic.ApplyAddMove(room.GameState, player.PlayerId, fromHand, toHand);
-        if (newState == null) return;
+        if (newState == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Invalid add move.");
+            return;
+        }
 
         room.GameState = newState;
 
@@ -63,7 +72,8 @@ public class GameHub : Hub
             room.Status = "gameOver";
         }
 
-        await Clients.Group(room.Code).SendAsync("GameStateUpdated", GameLogic.ToDto(newState));
+        var moveInfo = new MoveInfoDto { Type = "add", MoverId = player.PlayerId, FromHand = fromHand, ToHand = toHand };
+        await Clients.Group(room.Code).SendAsync("GameStateUpdated", GameLogic.ToDto(newState), moveInfo);
     }
 
     public async Task MakeSplitMove(int newLeft, int newRight)
@@ -73,20 +83,31 @@ public class GameHub : Hub
 
         var player = room.GetPlayerByConnectionId(Context.ConnectionId);
         if (player == null) return;
-        if (room.GameState.CurrentPlayer != player.PlayerId) return;
+
+        if (room.GameState.CurrentPlayer != player.PlayerId)
+        {
+            await Clients.Caller.SendAsync("Error", "It is not your turn.");
+            return;
+        }
 
         var newState = GameLogic.ApplySplitMove(room.GameState, player.PlayerId, newLeft, newRight);
-        if (newState == null) return;
+        if (newState == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Invalid split move.");
+            return;
+        }
 
         room.GameState = newState;
 
-        await Clients.Group(room.Code).SendAsync("GameStateUpdated", GameLogic.ToDto(newState));
+        var moveInfo = new MoveInfoDto { Type = "split", MoverId = player.PlayerId };
+        await Clients.Group(room.Code).SendAsync("GameStateUpdated", GameLogic.ToDto(newState), moveInfo);
     }
 
     public async Task PlayAgain()
     {
         var room = _roomManager.GetRoomByConnection(Context.ConnectionId);
         if (room?.GameState == null || room.Player1 == null || room.Player2 == null) return;
+        if (room.Status != "gameOver") return;
 
         var newStarting = room.GameState.StartingPlayer == "player1" ? "player2" : "player1";
         var newState = GameLogic.CreateInitialState();

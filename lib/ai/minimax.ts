@@ -1,14 +1,8 @@
 import type { BotMinimaxState, BotMove, PlayerState } from "../game/types";
+import { isPlayerDefeated } from "../game/gameLogic";
 
 function isGameOver(state: BotMinimaxState): boolean {
-  return (
-    (state.player1.leftHand === 0 && state.player1.rightHand === 0) ||
-    (state.player2.leftHand === 0 && state.player2.rightHand === 0)
-  );
-}
-
-function isPlayerDefeated(player: PlayerState): boolean {
-  return player.leftHand === 0 && player.rightHand === 0;
+  return isPlayerDefeated(state.player1) || isPlayerDefeated(state.player2);
 }
 
 function getTotalFingers(player: PlayerState): number {
@@ -63,7 +57,7 @@ function getSymmetricStateKey(state: BotMinimaxState): string {
 }
 
 function applyMove(state: BotMinimaxState, move: BotMove): BotMinimaxState {
-  const newState: BotMinimaxState = JSON.parse(JSON.stringify(state));
+  const newState: BotMinimaxState = structuredClone(state);
   const player = newState.isPlayer1Turn ? newState.player1 : newState.player2;
   const opponent = newState.isPlayer1Turn ? newState.player2 : newState.player1;
 

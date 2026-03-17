@@ -5,6 +5,7 @@ import Hand from "./Hand";
 import type { HandId, GameState } from "@/lib/game/types";
 import type { AnimatingMove, PendingSplit } from "@/lib/hooks/useGame";
 import { getHandValue, isSplitMoveValid } from "@/lib/game/gameLogic";
+import { ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "@/lib/game/constants";
 import { useDragDrop } from "@/lib/hooks/useDragDrop";
 
 interface GameBoardProps {
@@ -75,7 +76,7 @@ export default function GameBoard({
           { transform: `translate(${dx}px, ${dy}px)`, easing: "ease-in-out" },
           { transform: "translate(0px, 0px)" },
         ],
-        { duration: 800, fill: "none" }
+        { duration: ADD_ANIMATION_MS, fill: "none" }
       );
     }
 
@@ -90,7 +91,7 @@ export default function GameBoard({
       const ldx = midX - lc.x;
       const rdx = midX - rc.x;
 
-      const opts: KeyframeAnimationOptions = { duration: 650, fill: "none" };
+      const opts: KeyframeAnimationOptions = { duration: SPLIT_ANIMATION_MS, fill: "none" };
       // Each hand moves to the midpoint then returns — brief "collision" effect
       leftEl.animate(
         [

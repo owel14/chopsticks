@@ -38,6 +38,7 @@ export function isAddMoveValid(
   return sourcePlayerId !== targetPlayerId && sourceValue > 0 && targetValue !== 0;
 }
 
+/** Applies an add move: adds source hand's value to the target, mod 5 (0 = eliminated). */
 export function applyAddMove(
   state: GameState,
   sourceHandId: HandId,
@@ -48,7 +49,7 @@ export function applyAddMove(
   const sum = sourceValue + targetValue;
   const [targetPlayerId, targetHand] = parseHandId(targetHandId);
 
-  const newState: GameState = JSON.parse(JSON.stringify(state));
+  const newState: GameState = structuredClone(state);
   newState.players[targetPlayerId][targetHand] = sum >= 5 ? 0 : sum;
   newState.currentPlayer = state.currentPlayer === "player1" ? "player2" : "player1";
 
@@ -62,18 +63,20 @@ export function applyAddMove(
   return newState;
 }
 
+/** Applies a split move: redistributes the current player's fingers to newLeft/newRight. */
 export function applySplitMove(
   state: GameState,
   newLeft: number,
   newRight: number
 ): GameState {
-  const newState: GameState = JSON.parse(JSON.stringify(state));
+  const newState: GameState = structuredClone(state);
   newState.players[state.currentPlayer].leftHand = newLeft;
   newState.players[state.currentPlayer].rightHand = newRight;
   newState.currentPlayer = state.currentPlayer === "player1" ? "player2" : "player1";
   return newState;
 }
 
+/** Returns all valid [left, right] split distributions for the current player, deduplicating symmetric pairs. */
 export function getAllValidDistributions(
   state: GameState
 ): [number, number][] {
@@ -127,6 +130,11 @@ export function isBlockingPreview(
     (pendingSplit.newLeft === leftHand && pendingSplit.newRight === rightHand) ||
     (pendingSplit.newLeft === rightHand && pendingSplit.newRight === leftHand);
   return !symmetric;
+}
+
+/** Maps a bot move's `"left"` / `"right"` side to a board `HandId`. */
+export function botHandToHandId(side: "left" | "right", position: "top" | "bottom"): HandId {
+  return `${position}${side === "left" ? "Left" : "Right"}` as HandId;
 }
 
 export function createInitialGameState(): GameState {

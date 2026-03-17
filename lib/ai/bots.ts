@@ -1,6 +1,6 @@
 import { getBestMove } from "./minimax";
 import type { BotMinimaxState, BotMove, Difficulty, GameState, PlayerState } from "../game/types";
-import { getAllValidDistributions } from "../game/gameLogic";
+import { getAllValidDistributions, botHandToHandId } from "../game/gameLogic";
 
 function getHandStates(gameState: GameState): BotMinimaxState {
   return {
@@ -17,9 +17,11 @@ function getValidAddMoves(gameState: GameState): BotMove[] {
   const hands: Array<"left" | "right"> = ["left", "right"];
 
   for (const from of hands) {
-    if (player[`${from}Hand`] === 0) continue;
+    const fromVal = from === "left" ? player.leftHand : player.rightHand;
+    if (fromVal === 0) continue;
     for (const to of hands) {
-      if (opponent[`${to}Hand`] !== 0) {
+      const toVal = to === "left" ? opponent.leftHand : opponent.rightHand;
+      if (toVal !== 0) {
         moves.push({ type: "add", from, to });
       }
     }
@@ -75,7 +77,8 @@ export function botMoveToHandIds(
   move: BotMove
 ): { sourceHandId: string; targetHandId: string } | null {
   if (move.type !== "add") return null;
-  const sourceHandId = `top${move.from.charAt(0).toUpperCase()}${move.from.slice(1)}`;
-  const targetHandId = `bottom${move.to.charAt(0).toUpperCase()}${move.to.slice(1)}`;
-  return { sourceHandId, targetHandId };
+  return {
+    sourceHandId: botHandToHandId(move.from, "top"),
+    targetHandId: botHandToHandId(move.to, "bottom"),
+  };
 }
