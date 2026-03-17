@@ -12,7 +12,7 @@ export default function WinnerModal({ winner, onPlayAgain }: WinnerModalProps) {
     <div className="popup-overlay">
       <div className="winner-popup">
         <h2>{message}</h2>
-        <button onClick={onPlayAgain}>Play Again</button>
+        <button className="btn-primary" onClick={onPlayAgain}>Play Again</button>
       </div>
     </div>
   );

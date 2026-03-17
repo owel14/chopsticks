@@ -165,33 +165,43 @@ body {
 }
 
 
-/* ── Split button ────────────────────────────────────── */
+/* ── Shared primary button ───────────────────────────── */
 
-#splitButton {
+.btn-primary {
   font-family: "Inter", system-ui, sans-serif;
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.02em;
   background-color: var(--primary);
   color: white;
   border: none;
   padding: 12px 32px;
   border-radius: var(--radius-full);
-  margin: 0 10px 32px 10px;
+  cursor: pointer;
   transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   box-shadow: var(--shadow-sm);
 }
 
-#splitButton:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover);
-  cursor: pointer;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
-#splitButton:active:not(:disabled) {
+.btn-primary:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Split button ────────────────────────────────────── */
+
+#splitButton {
+  letter-spacing: 0.02em;
+  margin: 0 10px 32px 10px;
 }
 
 /* ── Info button ─────────────────────────────────────── */
@@ -255,24 +265,8 @@ body {
 }
 
 .game-mode-popup > button {
-  font-family: "Inter", system-ui, sans-serif;
   padding: 12px 40px;
-  font-size: 14px;
-  font-weight: 600;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: var(--shadow-sm);
   margin-top: 4px;
-}
-
-.game-mode-popup > button:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
 /* ── Difficulty selection ────────────────────────────── */
@@ -335,23 +329,7 @@ body {
 }
 
 .winner-popup button {
-  font-family: "Inter", system-ui, sans-serif;
   padding: 12px 36px;
-  font-size: 14px;
-  font-weight: 600;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.winner-popup button:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
 
 /* ── Tutorial modal ──────────────────────────────────── */
@@ -413,20 +391,6 @@ body {
 
 .tutorial-content p strong {
   color: var(--text);
-}
-
-.gif-wrapper {
-  display: flex;
-  justify-content: center;
-  margin: 14px 0;
-  background: var(--bg);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-}
-
-.gif-wrapper img {
-  width: 50%;
-  border-radius: 4px;
 }
 
 /* ── Responsive ──────────────────────────────────────── */

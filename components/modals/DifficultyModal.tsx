@@ -28,7 +28,7 @@ export default function DifficultyModal({ initialDifficulty, onStart }: Difficul
             </button>
           ))}
         </div>
-        <button onClick={() => onStart(selected)}>Play</button>
+        <button className="btn-primary" onClick={() => onStart(selected)}>Play</button>
       </div>
     </div>
   );

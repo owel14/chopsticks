@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import Hand from "./Hand";
-import type { HandId, GameState } from "@/lib/game/types";
-import type { AnimatingMove, PendingSplit } from "@/lib/hooks/useGame";
+import type { HandId, GameState, AnimatingMove, PendingSplit } from "@/lib/game/types";
 import { getHandValue, isSplitMoveValid } from "@/lib/game/gameLogic";
 import { useDragDrop } from "@/lib/hooks/useDragDrop";
+import { useBotAnimation } from "@/lib/hooks/useBotAnimation";
 
 interface GameBoardProps {
   gameState: GameState;
@@ -14,11 +13,6 @@ interface GameBoardProps {
   onExecuteAdd: (sourceHandId: HandId, targetHandId: HandId) => void;
   onSetPendingSplit: (split: PendingSplit | null) => void;
   onConfirmSplit: () => void;
-}
-
-// Returns the center of a DOMRect as {x, y}
-function center(r: DOMRect) {
-  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 
 export default function GameBoard({
@@ -39,73 +33,7 @@ export default function GameBoard({
     onSetPendingSplit,
   });
 
-  // ── Bot animation ──────────────────────────────────────────────────────────
-  // Uses Web Animations API so bot motion is completely decoupled from CSS
-  // transitions (which are used only for drag). fill:"none" means the API
-  // never leaves a committed inline style behind — no manual cleanup needed.
-  useEffect(() => {
-    const refs = handRefs.current;
-
-    if (!animatingMove) {
-      // Cancel any in-flight animations so they don't hold a stale transform.
-      (["topLeft", "topRight", "bottomLeft", "bottomRight"] as HandId[]).forEach((id) => {
-        refs[id]?.getAnimations().forEach((a) => a.cancel());
-      });
-      return;
-    }
-
-    if (animatingMove.type === "add") {
-      const sourceEl = refs[animatingMove.sourceHandId];
-      const targetEl = refs[animatingMove.targetHandId];
-      if (!sourceEl || !targetEl) return;
-
-      const sc = center(sourceEl.getBoundingClientRect());
-      const tc = center(targetEl.getBoundingClientRect());
-      const dx = tc.x - sc.x;
-      const dy = tc.y - sc.y;
-
-      // Single animation: origin → target (ease-out) → origin (ease-in-out)
-      sourceEl.animate(
-        [
-          { transform: "translate(0px, 0px)", easing: "ease-out" },
-          { transform: `translate(${dx}px, ${dy}px)`, easing: "ease-in-out" },
-          { transform: "translate(0px, 0px)" },
-        ],
-        { duration: 800, fill: "none" }
-      );
-    }
-
-    if (animatingMove.type === "split") {
-      const leftEl = refs["topLeft"];
-      const rightEl = refs["topRight"];
-      if (!leftEl || !rightEl) return;
-
-      const lc = center(leftEl.getBoundingClientRect());
-      const rc = center(rightEl.getBoundingClientRect());
-      const midX = (lc.x + rc.x) / 2;
-      const ldx = midX - lc.x;
-      const rdx = midX - rc.x;
-
-      const opts: KeyframeAnimationOptions = { duration: 650, fill: "none" };
-      // Each hand moves to the midpoint then returns — brief "collision" effect
-      leftEl.animate(
-        [
-          { transform: "translate(0px, 0px)", easing: "ease-in-out" },
-          { transform: `translate(${ldx}px, 0px)`, easing: "ease-in-out" },
-          { transform: "translate(0px, 0px)" },
-        ],
-        opts
-      );
-      rightEl.animate(
-        [
-          { transform: "translate(0px, 0px)", easing: "ease-in-out" },
-          { transform: `translate(${rdx}px, 0px)`, easing: "ease-in-out" },
-          { transform: "translate(0px, 0px)" },
-        ],
-        opts
-      );
-    }
-  }, [animatingMove]); // eslint-disable-line react-hooks/exhaustive-deps
+  useBotAnimation(animatingMove, handRefs);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -187,8 +115,8 @@ export default function GameBoard({
         </div>
         <button
           id="splitButton"
+          className="btn-primary"
           disabled={!splitEnabled}
-          style={{ opacity: splitEnabled ? 1 : 0.5, cursor: splitEnabled ? "pointer" : "not-allowed" }}
           onClick={onConfirmSplit}
         >
           Split
