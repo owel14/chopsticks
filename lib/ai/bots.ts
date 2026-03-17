@@ -1,6 +1,7 @@
 import { getBestMove } from "./minimax";
-import type { BotMinimaxState, BotMove, Difficulty, GameState, PlayerState } from "../game/types";
+import type { BotMinimaxState, BotMove, Difficulty, GameState, HandId } from "../game/types";
 import { getAllValidDistributions } from "../game/gameLogic";
+import { MEDIUM_RANDOM_CHANCE, MEDIUM_DEPTH, HARD_DEPTH, ADD_VS_SPLIT_CHANCE } from "../game/constants";
 
 function getHandStates(gameState: GameState): BotMinimaxState {
   return {
@@ -48,7 +49,7 @@ function getRandomSplitMove(gameState: GameState): BotMove | null {
 }
 
 export function getRandomBotMove(gameState: GameState): BotMove | null {
-  const useAdd = Math.random() < 0.5;
+  const useAdd = Math.random() < ADD_VS_SPLIT_CHANCE;
   if (useAdd) return getRandomAddMove(gameState) ?? getRandomSplitMove(gameState);
   return getRandomSplitMove(gameState) ?? getRandomAddMove(gameState);
 }
@@ -59,23 +60,30 @@ export function getMinimaxBotMove(gameState: GameState, depth: number): BotMove 
 }
 
 export function getMixedBotMove(gameState: GameState): BotMove | null {
-  if (Math.random() < 0.4) return getRandomBotMove(gameState);
-  return getMinimaxBotMove(gameState, 4);
+  if (Math.random() < MEDIUM_RANDOM_CHANCE) return getRandomBotMove(gameState);
+  return getMinimaxBotMove(gameState, MEDIUM_DEPTH);
 }
 
 export function getBotMove(gameState: GameState, difficulty: Difficulty): BotMove | null {
   switch (difficulty) {
     case "easy":   return getRandomBotMove(gameState);
     case "medium": return getMixedBotMove(gameState);
-    case "hard":   return getMinimaxBotMove(gameState, 12);
+    case "hard":   return getMinimaxBotMove(gameState, HARD_DEPTH);
   }
 }
 
+const HAND_ID_MAP: Record<string, HandId> = {
+  "top-left": "topLeft",
+  "top-right": "topRight",
+  "bottom-left": "bottomLeft",
+  "bottom-right": "bottomRight",
+};
+
 export function botMoveToHandIds(
   move: BotMove
-): { sourceHandId: string; targetHandId: string } | null {
+): { sourceHandId: HandId; targetHandId: HandId } | null {
   if (move.type !== "add") return null;
-  const sourceHandId = `top${move.from.charAt(0).toUpperCase()}${move.from.slice(1)}`;
-  const targetHandId = `bottom${move.to.charAt(0).toUpperCase()}${move.to.slice(1)}`;
+  const sourceHandId = HAND_ID_MAP[`top-${move.from}`];
+  const targetHandId = HAND_ID_MAP[`bottom-${move.to}`];
   return { sourceHandId, targetHandId };
 }
