@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { HubConnectionBuilder, HubConnection, LogLevel } from "@microsoft/signalr";
 import type { GameState, HandId, PlayerId, PlayerState } from "../game/types";
 import type { PendingSplit, AnimatingMove } from "./useGame";
-import { applyAddMove, applySplitMove, getAllValidDistributions, isSplitMoveValid } from "../game/gameLogic";
+import { applyAddMove, applySplitMove, getAllValidDistributions, getHandValue, isSplitMoveValid } from "../game/gameLogic";
 import { ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "../game/constants";
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
@@ -107,6 +107,8 @@ export function useOnlineGame(
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const connection = new HubConnectionBuilder()
       .withUrl(`${SERVER_URL}/gamehub`)
       .withAutomaticReconnect()
@@ -116,6 +118,7 @@ export function useOnlineGame(
     connectionRef.current = connection;
 
     connection.on("RoomCreated", (roomCode: string) => {
+      if (cancelled) return;
       setOnline(prev => ({ ...prev, roomCode, status: "waiting" }));
       window.history.replaceState(null, "", `/${roomCode}`);
     });
@@ -123,6 +126,7 @@ export function useOnlineGame(
     connection.on(
       "GameStarted",
       (serverState: ServerGameState, yourPlayerId: string, p1Name: string, p2Name: string) => {
+        if (cancelled) return;
         const myId = yourPlayerId as PlayerId;
         myPlayerIdRef.current = myId;
         const opponentName = myId === "player1" ? p2Name : p1Name;
@@ -142,6 +146,7 @@ export function useOnlineGame(
     );
 
     connection.on("GameStateUpdated", (serverState: ServerGameState, moveInfo?: MoveInfo) => {
+      if (cancelled) return;
       const myId = myPlayerIdRef.current;
       if (!myId) return;
 
@@ -161,6 +166,7 @@ export function useOnlineGame(
         const delay = moveInfo.type === "add" ? ADD_ANIMATION_MS : SPLIT_ANIMATION_MS;
         if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
         animationTimerRef.current = setTimeout(() => {
+          if (cancelled) return;
           setAnimatingMove(null);
           setGameState(translated);
           gameStateRef.current = translated;
@@ -183,14 +189,17 @@ export function useOnlineGame(
     });
 
     connection.on("OpponentLeft", () => {
+      if (cancelled) return;
       setOnline(prev => ({ ...prev, status: "opponentLeft" }));
     });
 
     connection.on("Error", (message: string) => {
+      if (cancelled) return;
       setOnline(prev => ({ ...prev, status: "error", error: message }));
     });
 
     connection.onclose(() => {
+      if (cancelled) return;
       setOnline(prev => {
         if (prev.status === "opponentLeft" || prev.status === "error") return prev;
         return { ...prev, status: "connecting" };
@@ -200,6 +209,7 @@ export function useOnlineGame(
     connection
       .start()
       .then(() => {
+        if (cancelled) return;
         if (action === "create") {
           connection.invoke("CreateRoom", playerName);
         } else if (roomCodeParam) {
@@ -207,6 +217,7 @@ export function useOnlineGame(
         }
       })
       .catch((err) => {
+        if (cancelled) return;
         console.error("SignalR error:", err);
         setOnline(prev => ({
           ...prev,
@@ -216,6 +227,8 @@ export function useOnlineGame(
       });
 
     return () => {
+      cancelled = true;
+      connectionRef.current = null;
       if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
       connection.stop();
     };
@@ -225,16 +238,36 @@ export function useOnlineGame(
     setPendingSplitState(split);
   }, []);
 
-  const executeAdd = useCallback((sourceHandId: HandId, targetHandId: HandId) => {
+  const executeAdd = useCallback((sourceHandId: HandId, targetHandId: HandId, preSplit?: PendingSplit | null) => {
     const conn = connectionRef.current;
     if (!conn) return;
 
-    const fromHand = sourceHandId === "bottomLeft" ? "left" : "right";
+    // When there's a symmetric split preview, the sourceHandId is the visual hand.
+    // Map it to the actual hand on the server (which doesn't know about the split).
+    let serverSourceHandId = sourceHandId;
+    if (preSplit) {
+      const displayedVal = sourceHandId === "bottomLeft" ? preSplit.newLeft : preSplit.newRight;
+      const actualVal = getHandValue(gameStateRef.current, sourceHandId);
+      if (displayedVal !== actualVal) {
+        serverSourceHandId = sourceHandId === "bottomLeft" ? "bottomRight" : "bottomLeft";
+      }
+    }
+
+    const fromHand = serverSourceHandId === "bottomLeft" ? "left" : "right";
     const toHand = targetHandId === "topLeft" ? "left" : "right";
 
-    // Optimistic update — apply locally so there's no flash between
-    // the drag preview clearing and the server response arriving
-    const optimistic = applyAddMove(gameStateRef.current, sourceHandId, targetHandId);
+    // Optimistic update — apply split to base state so the hand arrangement persists
+    let baseState = gameStateRef.current;
+    if (preSplit) {
+      baseState = {
+        ...baseState,
+        players: {
+          ...baseState.players,
+          player2: { leftHand: preSplit.newLeft, rightHand: preSplit.newRight },
+        },
+      };
+    }
+    const optimistic = applyAddMove(baseState, sourceHandId, targetHandId);
     setGameState(optimistic);
     gameStateRef.current = optimistic;
     setPendingSplitState(null);

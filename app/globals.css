@@ -443,13 +443,15 @@ body {
 }
 
 .tutorial-content {
-  padding: 20px 24px 24px;
+  padding: 16px 24px 24px;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 1.7;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
-.tutorial-content p {
-  margin-bottom: 12px;
+.tutorial-content > p:first-child {
+  margin-bottom: 16px;
   color: var(--text-muted);
 }
 
@@ -457,18 +459,131 @@ body {
   color: var(--text);
 }
 
-.gif-wrapper {
-  display: flex;
-  justify-content: center;
-  margin: 14px 0;
+.tutorial-section {
+  margin-bottom: 16px;
+  padding: 12px 14px;
   background: var(--bg);
   border-radius: var(--radius-sm);
-  padding: 10px;
+  border: 1px solid var(--border);
 }
 
-.gif-wrapper img {
-  width: 50%;
-  border-radius: 4px;
+.tutorial-section p {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+}
+
+.tutorial-rule-title {
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary) !important;
+  margin-bottom: 4px !important;
+}
+
+.tutorial-win {
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: 0 !important;
+  padding: 10px;
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+
+/* ── Animated tutorial demos ─────────────────────────── */
+
+.demo-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 0 4px;
+  min-height: 80px;
+}
+
+.demo-hand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.demo-hand img {
+  width: 52px;
+  height: 52px;
+}
+
+.demo-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.demo-arrow {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.demo-split-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 4px;
+}
+
+.demo-split-hands {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+.demo-split-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 22px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: white;
+  border: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+  transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.demo-split-btn-active {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.demo-split-btn-hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.demo-split-btn-pressed {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.demo-flash .demo-label {
+  color: var(--primary);
+}
+
+.demo-eliminated .demo-label {
+  color: #ef4444;
+  font-weight: 700;
 }
 
 /* ── Online lobby ────────────────────────────────────── */
