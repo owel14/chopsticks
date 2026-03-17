@@ -1,9 +1,18 @@
 import type { BotMinimaxState, BotMove, PlayerState } from "../game/types";
-import { isPlayerDefeated, getTotalFingers } from "../game/gameLogic";
-import { FINGERS_MOD, MAX_FINGERS, EVAL_WIN, EVAL_LOSS, EVAL_VULNERABILITY } from "../game/constants";
 
 function isGameOver(state: BotMinimaxState): boolean {
-  return isPlayerDefeated(state.player1) || isPlayerDefeated(state.player2);
+  return (
+    (state.player1.leftHand === 0 && state.player1.rightHand === 0) ||
+    (state.player2.leftHand === 0 && state.player2.rightHand === 0)
+  );
+}
+
+function isPlayerDefeated(player: PlayerState): boolean {
+  return player.leftHand === 0 && player.rightHand === 0;
+}
+
+function getTotalFingers(player: PlayerState): number {
+  return player.leftHand + player.rightHand;
 }
 
 function isVulnerable(player: PlayerState): boolean {
@@ -13,8 +22,8 @@ function isVulnerable(player: PlayerState): boolean {
 function canWinNextMove(attacker: PlayerState, defender: PlayerState): boolean {
   const total = getTotalFingers(attacker);
   return (
-    (defender.leftHand === 0 && total + defender.rightHand > MAX_FINGERS) ||
-    (defender.rightHand === 0 && total + defender.leftHand > MAX_FINGERS)
+    (defender.leftHand === 0 && total + defender.rightHand > 4) ||
+    (defender.rightHand === 0 && total + defender.leftHand > 4)
   );
 }
 
@@ -26,21 +35,21 @@ function evaluateVulnerableState(
   const botVulnerable = isVulnerable(player1);
   const opponentVulnerable = isVulnerable(player2);
   let score = 0;
-  if (botVulnerable && !opponentVulnerable) score -= EVAL_VULNERABILITY;
-  else if (opponentVulnerable && !botVulnerable) score += EVAL_VULNERABILITY;
+  if (botVulnerable && !opponentVulnerable) score -= 10;
+  else if (opponentVulnerable && !botVulnerable) score += 10;
   return isPlayer1Turn ? -score : score;
 }
 
 function evaluateState(state: BotMinimaxState): number {
   const { player1, player2, isPlayer1Turn } = state;
-  if (isPlayerDefeated(player2)) return EVAL_WIN;
-  if (isPlayerDefeated(player1)) return EVAL_LOSS;
+  if (isPlayerDefeated(player2)) return 100;
+  if (isPlayerDefeated(player1)) return -100;
 
   let score = 0;
   score += evaluateVulnerableState(player1, player2, isPlayer1Turn);
 
-  if (isPlayer1Turn && canWinNextMove(player1, player2)) return EVAL_WIN;
-  if (!isPlayer1Turn && canWinNextMove(player2, player1)) return EVAL_LOSS;
+  if (isPlayer1Turn && canWinNextMove(player1, player2)) return 100;
+  if (!isPlayer1Turn && canWinNextMove(player2, player1)) return -100;
 
   return score;
 }
@@ -62,7 +71,7 @@ function applyMove(state: BotMinimaxState, move: BotMove): BotMinimaxState {
     const sourceValue = player[`${move.from}Hand` as "leftHand" | "rightHand"];
     const targetValue = opponent[`${move.to}Hand` as "leftHand" | "rightHand"];
     const sum = sourceValue + targetValue;
-    opponent[`${move.to}Hand` as "leftHand" | "rightHand"] = sum >= FINGERS_MOD ? 0 : sum;
+    opponent[`${move.to}Hand` as "leftHand" | "rightHand"] = sum >= 5 ? 0 : sum;
   } else {
     player.leftHand = move.left;
     player.rightHand = move.right;
@@ -100,7 +109,7 @@ function getAllPossibleMoves(state: BotMinimaxState): BotMove[] {
     const right = total - left;
     if (
       right >= 0 &&
-      right <= MAX_FINGERS &&
+      right <= 4 &&
       left !== player.leftHand &&
       right !== player.rightHand &&
       left !== player.rightHand &&
