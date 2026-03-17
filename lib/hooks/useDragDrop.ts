@@ -27,7 +27,7 @@ interface UseDragDropOptions {
   gameState: GameState;
   pendingSplit: PendingSplit | null;
   isPlayerTurn: boolean;
-  onExecuteAdd: (source: HandId, target: HandId) => void;
+  onExecuteAdd: (source: HandId, target: HandId, preSplit?: PendingSplit | null) => void;
   onSetPendingSplit: (split: PendingSplit | null) => void;
 }
 
@@ -186,14 +186,7 @@ export function useDragDrop({
             const sourceVal = getDisplayed(handId);
             const overlappedVal = getHandValue(gs, overlapped);
             if (sourceVal > 0 && overlappedVal !== 0) {
-              // When a symmetric split preview has swapped the hand values visually,
-              // map the dragged hand back to whichever original hand holds that value.
-              const other: HandId = handId === "bottomLeft" ? "bottomRight" : "bottomLeft";
-              const effectiveHandId: HandId =
-                sourceVal !== getHandValue(gs, handId) && getHandValue(gs, other) === sourceVal
-                  ? other
-                  : handId;
-              onExecuteAddRef.current(effectiveHandId, overlapped);
+              onExecuteAddRef.current(handId, overlapped, pendingSplitRef.current);
             }
           }
         } else {

@@ -15,7 +15,7 @@ import type { Difficulty, GameState, HandId } from "../game/types";
 
 type Action =
   | { type: "START_GAME"; difficulty: Difficulty; nextStarting: "player1" | "player2" }
-  | { type: "EXECUTE_ADD"; sourceHandId: HandId; targetHandId: HandId }
+  | { type: "EXECUTE_ADD"; sourceHandId: HandId; targetHandId: HandId; preSplit?: PendingSplit | null }
   | { type: "EXECUTE_SPLIT"; newLeft: number; newRight: number }
   | { type: "PLAY_AGAIN" };
 
@@ -29,9 +29,23 @@ function gameReducer(state: GameState, action: Action): GameState {
         currentPlayer: action.nextStarting,
         phase: "playing",
       };
-    case "EXECUTE_ADD":
+    case "EXECUTE_ADD": {
       if (state.isGameOver) return state;
-      return applyAddMove(state, action.sourceHandId, action.targetHandId);
+      let baseState = state;
+      if (action.preSplit) {
+        baseState = {
+          ...state,
+          players: {
+            ...state.players,
+            [state.currentPlayer]: {
+              leftHand: action.preSplit.newLeft,
+              rightHand: action.preSplit.newRight,
+            },
+          },
+        };
+      }
+      return applyAddMove(baseState, action.sourceHandId, action.targetHandId);
+    }
     case "EXECUTE_SPLIT":
       if (state.isGameOver) return state;
       if (!isSplitMoveValid(state, action.newLeft, action.newRight)) return state;
@@ -116,9 +130,9 @@ export function useGame() {
   );
 
   const executeAdd = useCallback(
-    (sourceHandId: HandId, targetHandId: HandId) => {
+    (sourceHandId: HandId, targetHandId: HandId, preSplit?: PendingSplit | null) => {
       setPendingSplit(null);
-      dispatch({ type: "EXECUTE_ADD", sourceHandId, targetHandId });
+      dispatch({ type: "EXECUTE_ADD", sourceHandId, targetHandId, preSplit });
     },
     [setPendingSplit]
   );

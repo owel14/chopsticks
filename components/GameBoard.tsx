@@ -12,7 +12,7 @@ interface GameBoardProps {
   gameState: GameState;
   pendingSplit: PendingSplit | null;
   animatingMove: AnimatingMove;
-  onExecuteAdd: (sourceHandId: HandId, targetHandId: HandId) => void;
+  onExecuteAdd: (sourceHandId: HandId, targetHandId: HandId, preSplit?: PendingSplit | null) => void;
   onSetPendingSplit: (split: PendingSplit | null) => void;
   onConfirmSplit: () => void;
   opponentName?: string;
