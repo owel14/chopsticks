@@ -28,3 +28,6 @@ server/obj/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Vercel
+.vercel
