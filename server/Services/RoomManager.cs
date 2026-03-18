@@ -33,15 +33,20 @@ public class RoomManager
     {
         code = code.ToUpper();
         if (!_rooms.TryGetValue(code, out var room)) return null;
-        if (room.Player2 != null) return null;
 
-        room.Player2 = new Player
+        lock (room.Lock)
         {
-            ConnectionId = connectionId,
-            Name = playerName,
-            PlayerId = "player2"
-        };
-        room.Status = "playing";
+            if (room.Player2 != null) return null;
+
+            room.Player2 = new Player
+            {
+                ConnectionId = connectionId,
+                Name = playerName,
+                PlayerId = "player2"
+            };
+            room.Status = "playing";
+        }
+
         _connectionToRoom[connectionId] = code;
         return room;
     }
@@ -58,13 +63,15 @@ public class RoomManager
         _connectionToRoom.TryRemove(connectionId, out _);
         if (_rooms.TryGetValue(code, out var room))
         {
-            if (room.Player1?.ConnectionId == connectionId) room.Player1 = null;
-            if (room.Player2?.ConnectionId == connectionId) room.Player2 = null;
-
-            if (room.Player1 == null && room.Player2 == null)
+            bool empty;
+            lock (room.Lock)
             {
-                _rooms.TryRemove(code, out _);
+                if (room.Player1?.ConnectionId == connectionId) room.Player1 = null;
+                if (room.Player2?.ConnectionId == connectionId) room.Player2 = null;
+                empty = room.Player1 == null && room.Player2 == null;
             }
+
+            if (empty) _rooms.TryRemove(code, out _);
         }
     }
 

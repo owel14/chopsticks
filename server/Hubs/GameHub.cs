@@ -13,16 +13,24 @@ public class GameHub : Hub
         _roomManager = roomManager;
     }
 
+    private static string SanitizeName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "Anonymous";
+        name = name.Trim();
+        if (name.Length > 20) name = name[..20];
+        return new string(name.Where(c => !char.IsControl(c)).ToArray());
+    }
+
     public async Task CreateRoom(string playerName)
     {
-        var room = _roomManager.CreateRoom(Context.ConnectionId, playerName);
+        var room = _roomManager.CreateRoom(Context.ConnectionId, SanitizeName(playerName));
         await Groups.AddToGroupAsync(Context.ConnectionId, room.Code);
         await Clients.Caller.SendAsync("RoomCreated", room.Code);
     }
 
     public async Task JoinRoom(string roomCode, string playerName)
     {
-        var room = _roomManager.JoinRoom(roomCode, Context.ConnectionId, playerName);
+        var room = _roomManager.JoinRoom(roomCode, Context.ConnectionId, SanitizeName(playerName));
         if (room == null)
         {
             await Clients.Caller.SendAsync("Error", "Room not found or full.");
