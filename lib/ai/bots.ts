@@ -6,13 +6,14 @@ function getHandStates(gameState: GameState): BotMinimaxState {
   return {
     player1: { ...gameState.players.player1 },
     player2: { ...gameState.players.player2 },
-    isPlayer1Turn: true,
+    isPlayer1Turn: gameState.currentPlayer === "player1",
   };
 }
 
 function getValidAddMoves(gameState: GameState): BotMove[] {
-  const player = gameState.players.player1;
-  const opponent = gameState.players.player2;
+  const current = gameState.currentPlayer;
+  const player = gameState.players[current];
+  const opponent = current === "player1" ? gameState.players.player2 : gameState.players.player1;
   const moves: BotMove[] = [];
   const hands: Array<"left" | "right"> = ["left", "right"];
 
@@ -57,7 +58,7 @@ export function getRandomBotMove(gameState: GameState): BotMove | null {
 
 export function getMinimaxBotMove(gameState: GameState, depth: number): BotMove | null {
   const state = getHandStates(gameState);
-  return getBestMove(state, depth);
+  return getBestMove(state, depth) ?? getRandomBotMove(gameState);
 }
 
 export function getMixedBotMove(gameState: GameState): BotMove | null {

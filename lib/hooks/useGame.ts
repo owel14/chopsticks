@@ -8,6 +8,7 @@ import {
   createInitialGameState,
   getAllValidDistributions,
   isSplitMoveValid,
+  parseHandId,
 } from "../game/gameLogic";
 import { BOT_THINK_DELAY, ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "../game/constants";
 import { getBotMove } from "../ai/bots";
@@ -31,6 +32,8 @@ function gameReducer(state: GameState, action: Action): GameState {
       };
     case "EXECUTE_ADD": {
       if (state.isGameOver) return state;
+      const [sourcePlayer] = parseHandId(action.sourceHandId);
+      if (sourcePlayer !== state.currentPlayer) return state;
       let baseState = state;
       if (action.preSplit) {
         baseState = {

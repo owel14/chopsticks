@@ -13,12 +13,26 @@ function isVulnerable(player: PlayerState): boolean {
   return getTotalFingers(player) <= 1;
 }
 
+// Returns true if the attacker can eliminate the defender's last remaining hand
+// in a single attack (one attacking hand vs one defending hand).
+// Previously used total fingers as the attacking value, which was incorrect.
 function canWinNextMove(attacker: PlayerState, defender: PlayerState): boolean {
-  const total = getTotalFingers(attacker);
-  return (
-    (defender.leftHand === 0 && total + defender.rightHand > 4) ||
-    (defender.rightHand === 0 && total + defender.leftHand > 4)
-  );
+  const attackHands: number[] = [];
+  if (attacker.leftHand > 0) attackHands.push(attacker.leftHand);
+  if (attacker.rightHand > 0) attackHands.push(attacker.rightHand);
+
+  const defenseTargets: Array<{ value: number; other: number }> = [];
+  if (defender.leftHand > 0)
+    defenseTargets.push({ value: defender.leftHand, other: defender.rightHand });
+  if (defender.rightHand > 0)
+    defenseTargets.push({ value: defender.rightHand, other: defender.leftHand });
+
+  for (const atk of attackHands) {
+    for (const { value, other } of defenseTargets) {
+      if (atk + value >= 5 && other === 0) return true;
+    }
+  }
+  return false;
 }
 
 function evaluateVulnerableState(
@@ -34,16 +48,19 @@ function evaluateVulnerableState(
   return isPlayer1Turn ? -score : score;
 }
 
-function evaluateState(state: BotMinimaxState): number {
+// Scores wins/losses with depth adjustment to prefer faster wins and slower losses.
+// At maxDepth=12, win scores range 88–99 and loss scores range -99 to -88,
+// always dominating the heuristic range of ±10.
+function evaluateState(state: BotMinimaxState, depth: number, maxDepth: number): number {
   const { player1, player2, isPlayer1Turn } = state;
-  if (isPlayerDefeated(player2)) return 100;
-  if (isPlayerDefeated(player1)) return -100;
+  if (isPlayerDefeated(player2)) return 100 - (maxDepth - depth);
+  if (isPlayerDefeated(player1)) return -100 + (maxDepth - depth);
 
   let score = 0;
   score += evaluateVulnerableState(player1, player2, isPlayer1Turn);
 
-  if (isPlayer1Turn && canWinNextMove(player1, player2)) return 100;
-  if (!isPlayer1Turn && canWinNextMove(player2, player1)) return -100;
+  if (isPlayer1Turn && canWinNextMove(player1, player2)) return 100 - (maxDepth - depth);
+  if (!isPlayer1Turn && canWinNextMove(player2, player1)) return -100 + (maxDepth - depth);
 
   return score;
 }
@@ -57,7 +74,12 @@ function getSymmetricStateKey(state: BotMinimaxState): string {
 }
 
 function applyMove(state: BotMinimaxState, move: BotMove): BotMinimaxState {
-  const newState: BotMinimaxState = structuredClone(state);
+  // Shallow copy — all state values are primitives, structuredClone is not needed
+  const newState: BotMinimaxState = {
+    player1: { leftHand: state.player1.leftHand, rightHand: state.player1.rightHand },
+    player2: { leftHand: state.player2.leftHand, rightHand: state.player2.rightHand },
+    isPlayer1Turn: state.isPlayer1Turn,
+  };
   const player = newState.isPlayer1Turn ? newState.player1 : newState.player2;
   const opponent = newState.isPlayer1Turn ? newState.player2 : newState.player1;
 
@@ -98,6 +120,8 @@ function getAllPossibleMoves(state: BotMinimaxState): BotMove[] {
     if (opponent.rightHand !== 0) addIfUnique({ type: "add", from: "right", to: "right" });
   }
 
+  // Enumerate split distributions up to total/2 to deduplicate symmetric halves;
+  // addIfUnique filters any remaining post-state duplicates.
   const total = player.leftHand + player.rightHand;
   for (let left = 0; left <= Math.floor(total / 2); left++) {
     const right = total - left;
@@ -126,10 +150,11 @@ function minimax(
   depth: number,
   isMaximizing: boolean,
   alpha: number,
-  beta: number
+  beta: number,
+  maxDepth: number
 ): MinimaxResult {
   if (depth === 0 || isGameOver(state)) {
-    return { move: null, score: evaluateState(state) };
+    return { move: null, score: evaluateState(state, depth, maxDepth) };
   }
 
   const moves = getAllPossibleMoves(state);
@@ -138,7 +163,7 @@ function minimax(
   if (isMaximizing) {
     let maxEval = -Infinity;
     for (const move of moves) {
-      const { score } = minimax(applyMove(state, move), depth - 1, false, alpha, beta);
+      const { score } = minimax(applyMove(state, move), depth - 1, false, alpha, beta, maxDepth);
       if (score > maxEval) { maxEval = score; bestMove = move; }
       alpha = Math.max(alpha, score);
       if (beta <= alpha) break;
@@ -147,7 +172,7 @@ function minimax(
   } else {
     let minEval = Infinity;
     for (const move of moves) {
-      const { score } = minimax(applyMove(state, move), depth - 1, true, alpha, beta);
+      const { score } = minimax(applyMove(state, move), depth - 1, true, alpha, beta, maxDepth);
       if (score < minEval) { minEval = score; bestMove = move; }
       beta = Math.min(beta, score);
       if (beta <= alpha) break;
@@ -157,5 +182,5 @@ function minimax(
 }
 
 export function getBestMove(state: BotMinimaxState, depth: number): BotMove | null {
-  return minimax(state, depth, true, -Infinity, Infinity).move;
+  return minimax(state, depth, true, -Infinity, Infinity, depth).move;
 }
