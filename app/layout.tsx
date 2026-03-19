@@ -14,6 +14,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        {[0, 1, 2, 3, 4].map((n) => (
+          <link key={n} rel="preload" as="image" href={`/img/${n}.png`} />
+        ))}
       </head>
       <body>{children}</body>
     </html>
