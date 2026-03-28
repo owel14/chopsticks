@@ -24,7 +24,7 @@ function ConnectingScreen() {
         <p className="connecting-title">Connecting to server</p>
         {elapsed >= 5 && (
           <p className="connecting-hint">
-            The server may be waking up&nbsp;&mdash; this can take up to 2 minutes.
+            The server may be waking up - this can take up to 2 minutes.
           </p>
         )}
       </div>
