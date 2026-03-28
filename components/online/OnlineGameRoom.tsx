@@ -1,10 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOnlineGame } from "@/lib/hooks/useOnlineGame";
 import GameBoard from "@/components/GameBoard";
 import WinnerModal from "@/components/modals/WinnerModal";
 import WaitingScreen from "./WaitingScreen";
+
+function ConnectingScreen() {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <main className="game-container">
+      <div className="connecting-box">
+        <div className="connecting-dots">
+          <span /><span /><span />
+        </div>
+        <p className="connecting-title">Connecting to server</p>
+        {elapsed >= 5 && (
+          <p className="connecting-hint">
+            The server may be waking up - this can take up to 2 minutes.
+          </p>
+        )}
+      </div>
+    </main>
+  );
+}
 
 interface OnlineGameRoomProps {
   action: "create" | "join";
@@ -26,11 +52,7 @@ export default function OnlineGameRoom({ action, roomCode, playerName }: OnlineG
   } = useOnlineGame(action, roomCode, playerName);
 
   if (online.status === "connecting") {
-    return (
-      <main className="game-container">
-        <div className="status-message">Connecting to server&hellip;</div>
-      </main>
-    );
+    return <ConnectingScreen />;
   }
 
   if (online.status === "waiting") {
