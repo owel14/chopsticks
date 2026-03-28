@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App - chopsticks-server
+name: Build and deploy ASP.Net Core app to Azure Web App - Chopsticks
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: read #This is required for actions/checkout
 
@@ -25,9 +25,11 @@ jobs:
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
+        working-directory: ./server
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        working-directory: ./server
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -35,8 +37,9 @@ jobs:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
+
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: build
     permissions:
       id-token: write #This is required for requesting the JWT
@@ -59,7 +62,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'chopsticks-server'
+          app-name: 'Chopsticks'
           slot-name: 'Production'
           package: .
           
