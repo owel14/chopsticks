@@ -9,6 +9,7 @@ public class Player
 
 public class Room
 {
+    public readonly object Lock = new();
     public string Code { get; set; } = "";
     public Player? Player1 { get; set; }
     public Player? Player2 { get; set; }

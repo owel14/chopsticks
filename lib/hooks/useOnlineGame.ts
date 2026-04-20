@@ -120,7 +120,9 @@ export function useOnlineGame(
     connection.on("RoomCreated", (roomCode: string) => {
       if (cancelled) return;
       setOnline(prev => ({ ...prev, roomCode, status: "waiting" }));
-      window.history.replaceState(null, "", `/${roomCode}`);
+      if (/^[A-Z2-9]{6}$/.test(roomCode)) {
+        window.history.replaceState(null, "", `/${roomCode}`);
+      }
     });
 
     connection.on(

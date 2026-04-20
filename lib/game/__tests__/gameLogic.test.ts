@@ -11,6 +11,7 @@ import {
   isSplitMoveValid,
   isBlockingPreview,
   createInitialGameState,
+  botHandToHandId,
 } from "../gameLogic";
 import type { GameState } from "../types";
 
@@ -454,5 +455,215 @@ describe("game rule invariants", () => {
     const next = applyAddMove(state, "bottomLeft", "topRight"); // 3+2=5→0
     expect(next.players.player1.rightHand).toBe(0);
     expect(next.currentPlayer).toBe("player1");
+  });
+});
+
+// ── parseHandId — error handling ───────────────────────────────────────────
+
+describe("parseHandId — error handling", () => {
+  it("throws on an unrecognised handId string", () => {
+    expect(() => parseHandId("middleLeft" as never)).toThrow();
+  });
+  it("throws on an empty string", () => {
+    expect(() => parseHandId("" as never)).toThrow();
+  });
+  it("throws on a partially-correct string", () => {
+    expect(() => parseHandId("topleft" as never)).toThrow();
+  });
+});
+
+// ── botHandToHandId ────────────────────────────────────────────────────────
+
+describe("botHandToHandId", () => {
+  it("left/top → topLeft", () => {
+    expect(botHandToHandId("left", "top")).toBe("topLeft");
+  });
+  it("right/top → topRight", () => {
+    expect(botHandToHandId("right", "top")).toBe("topRight");
+  });
+  it("left/bottom → bottomLeft", () => {
+    expect(botHandToHandId("left", "bottom")).toBe("bottomLeft");
+  });
+  it("right/bottom → bottomRight", () => {
+    expect(botHandToHandId("right", "bottom")).toBe("bottomRight");
+  });
+});
+
+// ── applyAddMove — boundary values ────────────────────────────────────────
+
+describe("applyAddMove — boundary values", () => {
+  it("sum exactly 4 does NOT eliminate the hand", () => {
+    const state = makeState({ l: 3, r: 1 }, { l: 1, r: 1 });
+    const next = applyAddMove(state, "bottomLeft", "topLeft"); // 1+3=4 → stays 4
+    expect(next.players.player1.leftHand).toBe(4);
+    expect(next.isGameOver).toBe(false);
+  });
+
+  it("sum exactly 5 eliminates the hand (mod 5 → 0)", () => {
+    const state = makeState({ l: 4, r: 1 }, { l: 1, r: 1 });
+    const next = applyAddMove(state, "bottomLeft", "topLeft"); // 1+4=5→0
+    expect(next.players.player1.leftHand).toBe(0);
+  });
+
+  it("sum 8 (4+4) wraps to 0", () => {
+    const state = makeState({ l: 4, r: 1 }, { l: 4, r: 1 });
+    const next = applyAddMove(state, "bottomLeft", "topLeft"); // 4+4=8→0
+    expect(next.players.player1.leftHand).toBe(0);
+  });
+
+  it("sum 6 (4+2) wraps to 0", () => {
+    const state = makeState({ l: 4, r: 1 }, { l: 2, r: 1 });
+    const next = applyAddMove(state, "bottomLeft", "topLeft"); // 2+4=6→0
+    expect(next.players.player1.leftHand).toBe(0);
+  });
+});
+
+// ── getAllValidDistributions — player1's turn ──────────────────────────────
+
+describe("getAllValidDistributions — player1's turn", () => {
+  it("{1,3} for player1: valid splits are {0,4} and {2,2}", () => {
+    const state = makeState({ l: 1, r: 3 }, { l: 1, r: 1 }, "player1");
+    const dists = getAllValidDistributions(state);
+    const canonical = dists
+      .map(([a, b]) => [Math.min(a, b), Math.max(a, b)] as [number, number])
+      .sort((a, b) => a[0] - b[0]);
+    expect(canonical).toEqual([[0, 4], [2, 2]]);
+  });
+
+  it("{2,2} for player1: valid splits are {0,4} and {1,3}", () => {
+    const state = makeState({ l: 2, r: 2 }, { l: 1, r: 1 }, "player1");
+    const dists = getAllValidDistributions(state);
+    const canonical = dists
+      .map(([a, b]) => [Math.min(a, b), Math.max(a, b)] as [number, number])
+      .sort((a, b) => a[0] - b[0]);
+    expect(canonical).toEqual([[0, 4], [1, 3]]);
+  });
+
+  it("{4,3} for player1: no valid splits (only symmetric mirror exists)", () => {
+    const state = makeState({ l: 4, r: 3 }, { l: 1, r: 1 }, "player1");
+    expect(getAllValidDistributions(state)).toHaveLength(0);
+  });
+
+  it("{3,0} for player1: only valid split is {1,2}", () => {
+    const state = makeState({ l: 3, r: 0 }, { l: 1, r: 1 }, "player1");
+    const dists = getAllValidDistributions(state);
+    expect(dists).toHaveLength(1);
+    const [[l, r]] = dists;
+    expect(Math.min(l, r)).toBe(1);
+    expect(Math.max(l, r)).toBe(2);
+  });
+});
+
+// ── getAllValidDistributions — one hand eliminated ─────────────────────────
+
+describe("getAllValidDistributions — one eliminated hand", () => {
+  it("{0,4}: valid splits are {1,3} and {2,2}", () => {
+    const state = makeState({ l: 1, r: 1 }, { l: 0, r: 4 });
+    const dists = getAllValidDistributions(state);
+    const canonical = dists
+      .map(([a, b]) => [Math.min(a, b), Math.max(a, b)] as [number, number])
+      .sort((a, b) => a[0] - b[0]);
+    expect(canonical).toEqual([[1, 3], [2, 2]]);
+  });
+
+  it("{0,2}: valid split is {1,1}", () => {
+    const state = makeState({ l: 1, r: 1 }, { l: 0, r: 2 });
+    const dists = getAllValidDistributions(state);
+    expect(dists).toHaveLength(1);
+    expect(dists[0][0] + dists[0][1]).toBe(2);
+    expect(Math.min(dists[0][0], dists[0][1])).toBe(1);
+  });
+
+  it("{0,1}: no valid splits (total=1, only identity distribution)", () => {
+    const state = makeState({ l: 1, r: 1 }, { l: 0, r: 1 });
+    expect(getAllValidDistributions(state)).toHaveLength(0);
+  });
+});
+
+// ── isSplitMoveValid — player1's turn ─────────────────────────────────────
+
+describe("isSplitMoveValid — player1's turn", () => {
+  it("accepts valid distributions for player1", () => {
+    const state = makeState({ l: 3, r: 1 }, { l: 1, r: 1 }, "player1");
+    expect(isSplitMoveValid(state, 2, 2)).toBe(true);
+    expect(isSplitMoveValid(state, 0, 4)).toBe(true);
+  });
+
+  it("rejects the original hand state for player1", () => {
+    const state = makeState({ l: 3, r: 1 }, { l: 1, r: 1 }, "player1");
+    expect(isSplitMoveValid(state, 3, 1)).toBe(false);
+    expect(isSplitMoveValid(state, 1, 3)).toBe(false);
+  });
+});
+
+// ── checkWinner — priority ordering ───────────────────────────────────────
+
+describe("checkWinner — priority ordering", () => {
+  it("player1 check fires first: {0,0} vs {0,0} → player2 wins", () => {
+    // Degenerate state unreachable via valid moves — tests evaluation order only
+    const state = makeState({ l: 0, r: 0 }, { l: 0, r: 0 });
+    expect(checkWinner(state)).toBe("player2");
+  });
+});
+
+// ── Integration — multi-move game sequences ────────────────────────────────
+
+describe("integration — multi-move game sequences", () => {
+  it("correctly resolves a near-end game to game over", () => {
+    let state = makeState({ l: 0, r: 1 }, { l: 4, r: 1 });
+    expect(state.isGameOver).toBe(false);
+    expect(state.currentPlayer).toBe("player2");
+
+    state = applyAddMove(state, "bottomLeft", "topRight"); // 4+1=5→0, p1 eliminated
+    expect(state.isGameOver).toBe(true);
+    expect(state.winner).toBe("player2");
+    expect(state.phase).toBe("gameOver");
+    expect(state.players.player1.leftHand).toBe(0);
+    expect(state.players.player1.rightHand).toBe(0);
+  });
+
+  it("split then add: total preserved and turn alternates correctly", () => {
+    let state = makeState({ l: 2, r: 1 }, { l: 3, r: 1 }, "player2");
+    const p2TotalBefore = state.players.player2.leftHand + state.players.player2.rightHand;
+
+    state = applySplitMove(state, 2, 2); // p2 splits {3,1} → {2,2}
+    expect(state.players.player2.leftHand + state.players.player2.rightHand).toBe(p2TotalBefore);
+    expect(state.currentPlayer).toBe("player1");
+
+    state = applyAddMove(state, "topLeft", "bottomLeft"); // p1 attacks: 2+2=4
+    expect(state.players.player2.leftHand).toBe(4);
+    expect(state.currentPlayer).toBe("player2");
+  });
+
+  it("original state is never mutated across a chain of moves", () => {
+    const initial = makeState({ l: 1, r: 2 }, { l: 2, r: 1 });
+    const snap = JSON.stringify(initial);
+    const s1 = applyAddMove(initial, "bottomLeft", "topRight"); // 2+2=4
+    const s2 = applyAddMove(s1, "topLeft", "bottomRight");      // 1+1=2
+    void s2;
+    expect(JSON.stringify(initial)).toBe(snap);
+  });
+
+  it("full game from initial: can reach a winner within valid moves", () => {
+    // Start from initial state, play a sequence that ends the game
+    // p2: 1,1 vs p1: 1,1. p2 attacks: 1+1=2. p1: 2,1. p2 attacks: 1+2=3. p1: 3,1
+    // p2 attacks: 1+3=4. p1: 4,1. p2 attacks: 1+4=5→0. p1: 0,1
+    // p1 attacks: 1+1=2. p2: 2,1. p1 attacks: 1+2=3. p2: 3,1
+    // p1 attacks: 1+3=4. p2: 4,1. p1 attacks: 1+4=5→0. p2: 0,1
+    // Then we'd cycle... let's use a shortcut: from {0,1} vs {4,1}, attack to finish
+    let state = makeState({ l: 0, r: 1 }, { l: 4, r: 1 }); // p2's turn
+    expect(checkWinner(state)).toBeNull();
+    state = applyAddMove(state, "bottomLeft", "topRight");
+    expect(state.winner).toBe("player2");
+  });
+
+  it("a split does not change whose turn it is after the opponent moves", () => {
+    let state = makeState({ l: 1, r: 3 }, { l: 1, r: 1 }, "player2");
+    // p2 splits
+    state = applySplitMove(state, 2, 2);
+    expect(state.currentPlayer).toBe("player1");
+    // p1 makes an add move
+    state = applyAddMove(state, "topLeft", "bottomLeft"); // 1+2=3
+    expect(state.currentPlayer).toBe("player2");
   });
 });

@@ -76,8 +76,9 @@ public static class GameLogic
         var player = playerId == "player1" ? state.Player1 : state.Player2;
         int total = player.LeftHand + player.RightHand;
 
+        if (newLeft < 0 || newRight < 0) return null;
+        if (newLeft > 4 || newRight > 4) return null;
         if (newLeft + newRight != total) return null;
-        if (newLeft < 0 || newLeft > 4 || newRight < 0 || newRight > 4) return null;
 
         // Can't split to same distribution (including symmetric)
         if ((newLeft == player.LeftHand && newRight == player.RightHand) ||
