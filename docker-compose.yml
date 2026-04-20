@@ -1,0 +1,45 @@
+services:
+  chopsticks-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chopsticks-server
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      # Caddy is the hostname trust boundary in this deployment, so the
+      # app-level host filter can safely accept anything on the internal net.
+      - AllowedHosts=*
+      # CorsOrigins__N overrides the CorsOrigins[] array in appsettings.json
+      # at runtime. Add every frontend origin that should be allowed to connect.
+      - CorsOrigins__0=https://chopsticks-online.vercel.app
+      # - CorsOrigins__1=https://your-custom-frontend-domain.example
+    expose:
+      - "5000"
+    networks:
+      - web
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - chopsticks-server
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

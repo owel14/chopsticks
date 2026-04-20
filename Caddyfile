@@ -1,0 +1,10 @@
+# Caddy automatically requests a Let's Encrypt certificate for this hostname
+# on first boot and renews it in the background.
+
+chopsticks-online.duckdns.org {
+    encode zstd gzip
+
+    reverse_proxy chopsticks-server:5000 {
+        flush_interval -1
+    }
+}
