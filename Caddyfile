@@ -1,10 +1,11 @@
-# Caddy automatically requests a Let's Encrypt certificate for this hostname
-# on first boot and renews it in the background.
+# This file is for reference only — the active Caddyfile is on the VPS.
+# Add this site block to your existing Caddyfile on the VPS (typically
+# at /etc/caddy/Caddyfile or wherever your Caddy instance is configured).
 
 chopsticks-online.duckdns.org {
     encode zstd gzip
 
-    reverse_proxy chopsticks-server:5000 {
+    reverse_proxy localhost:5002 {
         flush_interval -1
     }
 }
