@@ -1,13 +1,17 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import NamePrompt from "@/components/online/NamePrompt";
 import OnlineGameRoom from "@/components/online/OnlineGameRoom";
+import { isRoomCode } from "@/lib/online/roomCode";
 
 export default function OnlineGamePage() {
   const params = useParams();
-  const roomCode = params.roomCode as string;
+  const router = useRouter();
+  const rawRoomCode = params.roomCode as string;
+  const isCreate = rawRoomCode === "create";
+  const roomCode = rawRoomCode.toUpperCase();
   const [playerName, setPlayerName] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -19,11 +23,22 @@ export default function OnlineGamePage() {
 
   if (!checked) return null;
 
+  if (!isCreate && !isRoomCode(roomCode)) {
+    return (
+      <main className="game-container">
+        <div className="popup-overlay" style={{ position: "relative", background: "none", backdropFilter: "none" }}>
+          <div className="game-mode-popup">
+            <h2>Invalid room code</h2>
+            <button onClick={() => router.push("/")}>Back</button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (!playerName) {
     return <NamePrompt onSubmit={setPlayerName} />;
   }
-
-  const isCreate = roomCode === "create";
 
   return (
     <OnlineGameRoom

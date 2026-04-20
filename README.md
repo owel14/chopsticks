@@ -6,7 +6,7 @@ A browser implementation of the hand game [Chopsticks](https://en.wikipedia.org/
 
 Each player starts with one finger raised on each hand. On your turn you can:
 
-- **Attack**  drag one of your hands onto an opponent's hand. Their finger count increases by yours. A hand that reaches exactly 5 is eliminated.
+- **Attack**  drag one of your hands onto an opponent's hand. Their finger count increases by yours. A hand that reaches 5 or more is eliminated.
 - **Split**  drag one of your own hands onto your other hand to preview a redistribution, then click **Split** to confirm. You cannot split into the same arrangement you already have.
 
 Eliminate both of your opponent's hands to win.

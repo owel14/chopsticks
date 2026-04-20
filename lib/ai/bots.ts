@@ -1,5 +1,5 @@
 import { getBestMove } from "./minimax";
-import type { BotMinimaxState, BotMove, Difficulty, GameState, PlayerState } from "../game/types";
+import type { BotMinimaxState, BotMove, Difficulty, GameState } from "../game/types";
 import { getAllValidDistributions, botHandToHandId } from "../game/gameLogic";
 
 function getHandStates(gameState: GameState): BotMinimaxState {
@@ -74,12 +74,3 @@ export function getBotMove(gameState: GameState, difficulty: Difficulty): BotMov
   }
 }
 
-export function botMoveToHandIds(
-  move: BotMove
-): { sourceHandId: string; targetHandId: string } | null {
-  if (move.type !== "add") return null;
-  return {
-    sourceHandId: botHandToHandId(move.from, "top"),
-    targetHandId: botHandToHandId(move.to, "bottom"),
-  };
-}

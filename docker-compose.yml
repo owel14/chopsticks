@@ -16,6 +16,6 @@ services:
       - CorsOrigins__0=https://chopsticks-online.vercel.app
       # - CorsOrigins__1=https://your-custom-frontend-domain.example
     ports:
-      # Bound to loopback only — not reachable from outside the VPS.
+      # Bound to loopback only - not reachable from outside the VPS.
       # The host Caddy instance proxies to this port.
       - "127.0.0.1:5002:5000"
