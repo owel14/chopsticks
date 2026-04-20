@@ -6,7 +6,6 @@ import type { PendingSplit } from "@/lib/hooks/useGame";
 import {
   parseHandId,
   getHandValue,
-  isAddMoveValid,
   isBlockingPreview,
 } from "@/lib/game/gameLogic";
 
@@ -220,7 +219,7 @@ export function useDragDrop({
       document.removeEventListener("pointerup", onUp);
       document.removeEventListener("pointercancel", onUp);
     };
-  }, [checkOverlapByRect, computePreview]);
+  }, [checkOverlapByRect, computePreview, getDisplayed]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>, handId: HandId) => {

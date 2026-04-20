@@ -4,6 +4,9 @@ namespace ChopsticksServer.Services;
 
 public static class GameLogic
 {
+    private static bool IsPlayerId(string playerId) => playerId is "player1" or "player2";
+    private static bool IsHand(string hand) => hand is "left" or "right";
+
     public static GameState CreateInitialState()
     {
         return new GameState
@@ -38,6 +41,9 @@ public static class GameLogic
 
     public static GameState? ApplyAddMove(GameState state, string playerId, string fromHand, string toHand)
     {
+        if (state.IsGameOver) return null;
+        if (!IsPlayerId(playerId)) return null;
+        if (!IsHand(fromHand) || !IsHand(toHand)) return null;
         if (state.CurrentPlayer != playerId) return null;
 
         var attacker = playerId == "player1" ? state.Player1 : state.Player2;
@@ -71,6 +77,8 @@ public static class GameLogic
 
     public static GameState? ApplySplitMove(GameState state, string playerId, int newLeft, int newRight)
     {
+        if (state.IsGameOver) return null;
+        if (!IsPlayerId(playerId)) return null;
         if (state.CurrentPlayer != playerId) return null;
 
         var player = playerId == "player1" ? state.Player1 : state.Player2;

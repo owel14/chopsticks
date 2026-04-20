@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { isRoomCode, normalizeRoomCode } from "@/lib/online/roomCode";
 
 interface OnlineLobbyModalProps {
   onBack: () => void;
@@ -36,8 +37,13 @@ export default function OnlineLobbyModal({ onBack }: OnlineLobbyModalProps) {
       setError("Please enter a room code");
       return;
     }
+    const normalizedCode = normalizeRoomCode(joinCode);
+    if (!isRoomCode(normalizedCode)) {
+      setError("Please enter a valid room code");
+      return;
+    }
     sessionStorage.setItem("playerName", name.trim());
-    router.push(`/${joinCode.trim().toUpperCase()}`);
+    router.push(`/${normalizedCode}`);
   };
 
   return (
@@ -77,7 +83,7 @@ export default function OnlineLobbyModal({ onBack }: OnlineLobbyModalProps) {
             type="text"
             placeholder="Room code"
             value={joinCode}
-            onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setError(""); }}
+            onChange={(e) => { setJoinCode(normalizeRoomCode(e.target.value)); setError(""); }}
             maxLength={6}
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
           />

@@ -7,7 +7,9 @@ import type { PendingSplit, AnimatingMove } from "./useGame";
 import { applyAddMove, applySplitMove, getAllValidDistributions, getHandValue, isSplitMoveValid } from "../game/gameLogic";
 import { ADD_ANIMATION_MS, SPLIT_ANIMATION_MS } from "../game/constants";
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+const SERVER_URL =
+  process.env.NEXT_PUBLIC_SERVER_URL?.replace(/\/$/, "") ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:5000" : "");
 
 export type RoomStatus = "connecting" | "waiting" | "playing" | "gameOver" | "opponentLeft" | "error";
 
@@ -108,6 +110,15 @@ export function useOnlineGame(
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!SERVER_URL) {
+      setOnline(prev => ({
+        ...prev,
+        status: "error",
+        error: "Online server URL is not configured",
+      }));
+      return;
+    }
 
     const connection = new HubConnectionBuilder()
       .withUrl(`${SERVER_URL}/gamehub`)

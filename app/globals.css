@@ -123,7 +123,6 @@ body {
   align-items: center;
   justify-content: center;
   width: 80px;
-  float: right;
 }
 
 .hand img {
@@ -736,39 +735,6 @@ body {
   font-size: 13px;
   color: var(--text-muted);
   margin-bottom: 8px;
-}
-
-/* ── Back button ─────────────────────────────────────── */
-
-.back-button {
-  font-family: "Inter", system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  background-color: var(--surface);
-  color: var(--primary);
-  padding: 8px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-full);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-  position: absolute;
-  left: 16px;
-  top: 16px;
-  z-index: 100;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-}
-
-.back-button:hover {
-  background-color: var(--primary-light);
-  border-color: var(--primary);
-}
-
-/* ── Status message ──────────────────────────────────── */
-
-.status-message {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-muted);
 }
 
 /* ── Connecting screen ───────────────────────────────── */
