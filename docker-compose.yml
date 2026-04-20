@@ -8,6 +8,9 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:5000
+      # Caddy is the hostname trust boundary in this deployment, so the
+      # app-level host filter can safely accept anything on the internal net.
+      - AllowedHosts=*
       # CorsOrigins__N overrides the CorsOrigins[] array in appsettings.json
       # at runtime. Add every frontend origin that should be allowed to connect.
       - CorsOrigins__0=https://chopsticks-online.vercel.app
