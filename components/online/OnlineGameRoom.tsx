@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useOnlineGame } from "@/lib/hooks/useOnlineGame";
 import GameBoard from "@/components/GameBoard";
+import HelpButton from "@/components/HelpButton";
 import WinnerModal from "@/components/modals/WinnerModal";
 import WaitingScreen from "./WaitingScreen";
 
@@ -75,6 +76,8 @@ export default function OnlineGameRoom({ action, roomCode, playerName }: OnlineG
 
   return (
     <main className="game-container">
+      <HelpButton />
+
       <GameBoard
         gameState={gameState}
         pendingSplit={pendingSplit}

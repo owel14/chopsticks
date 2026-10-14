@@ -5,7 +5,7 @@ import GameBoard from "@/components/GameBoard";
 import DifficultyModal from "@/components/modals/DifficultyModal";
 import OnlineLobbyModal from "@/components/modals/OnlineLobbyModal";
 import WinnerModal from "@/components/modals/WinnerModal";
-import TutorialModal from "@/components/modals/TutorialModal";
+import HelpButton from "@/components/HelpButton";
 import { useGame } from "@/lib/hooks/useGame";
 
 export default function HomeGame() {
@@ -20,18 +20,11 @@ export default function HomeGame() {
     playAgain,
   } = useGame();
 
-  const [showTutorial, setShowTutorial] = useState(false);
   const [showOnlineLobby, setShowOnlineLobby] = useState(false);
 
   return (
     <div className="game-container">
-      <button
-        id="info-button"
-        onClick={() => setShowTutorial(true)}
-        aria-label="How to play"
-      >
-        ?
-      </button>
+      <HelpButton />
 
       <GameBoard
         gameState={gameState}
@@ -56,10 +49,6 @@ export default function HomeGame() {
 
       {gameState.phase === "gameOver" && gameState.winner && (
         <WinnerModal winner={gameState.winner} onPlayAgain={playAgain} />
-      )}
-
-      {showTutorial && (
-        <TutorialModal onClose={() => setShowTutorial(false)} />
       )}
     </div>
   );
