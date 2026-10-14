@@ -1,50 +1,50 @@
-"use client";
-
-import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import NamePrompt from "@/components/online/NamePrompt";
-import OnlineGameRoom from "@/components/online/OnlineGameRoom";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import OnlineGamePage from "@/components/online/OnlineGamePage";
 import { isRoomCode } from "@/lib/online/roomCode";
+import { SITE_NAME } from "@/lib/seo";
 
-export default function OnlineGamePage() {
-  const params = useParams();
-  const router = useRouter();
-  const rawRoomCode = params.roomCode as string;
-  const isCreate = rawRoomCode === "create";
-  const roomCode = rawRoomCode.toUpperCase();
-  const [playerName, setPlayerName] = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
+const INVITE_TITLE = "Join my Chopsticks game";
+const SHARE_IMAGE = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "Chopsticks – the hand game",
+};
+const INVITE_DESCRIPTION =
+  "You've been invited to a live game of Chopsticks. Open the link, enter your name and play.";
 
-  useEffect(() => {
-    const stored = sessionStorage.getItem("playerName");
-    if (stored) setPlayerName(stored);
-    setChecked(true);
-  }, []);
+// Rooms are private, short-lived pages: keep them out of search results, but
+// give shared links a friendly social preview.
+export const metadata: Metadata = {
+  title: "Online game",
+  robots: { index: false, follow: false },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: INVITE_TITLE,
+    description: INVITE_DESCRIPTION,
+    images: [SHARE_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: INVITE_TITLE,
+    description: INVITE_DESCRIPTION,
+    images: [SHARE_IMAGE],
+  },
+};
 
-  if (!checked) return null;
+export default async function OnlineRoomRoute({
+  params,
+}: {
+  params: Promise<{ roomCode: string }>;
+}) {
+  const { roomCode } = await params;
 
-  if (!isCreate && !isRoomCode(roomCode)) {
-    return (
-      <main className="game-container">
-        <div className="popup-overlay" style={{ position: "relative", background: "none", backdropFilter: "none" }}>
-          <div className="game-mode-popup">
-            <h2>Invalid room code</h2>
-            <button onClick={() => router.push("/")}>Back</button>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  // This dynamic segment sits at the site root, so it also receives every
+  // unknown URL. Return a real 404 for anything that isn't a room code instead
+  // of a 200 "soft 404" that search engines would treat as a valid page.
+  if (roomCode !== "create" && !isRoomCode(roomCode)) notFound();
 
-  if (!playerName) {
-    return <NamePrompt onSubmit={setPlayerName} />;
-  }
-
-  return (
-    <OnlineGameRoom
-      action={isCreate ? "create" : "join"}
-      roomCode={isCreate ? null : roomCode}
-      playerName={playerName}
-    />
-  );
+  return <OnlineGamePage roomCode={roomCode} />;
 }
