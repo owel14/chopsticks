@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import HomeGame from "@/components/HomeGame";
-import GameInfo from "@/components/seo/GameInfo";
 import JsonLd from "@/components/seo/JsonLd";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 
@@ -57,7 +56,6 @@ export default function Home() {
     <main>
       <h1 className="sr-only">Chopsticks – the hand game, free to play online</h1>
       <HomeGame />
-      <GameInfo />
       <JsonLd data={structuredData} />
     </main>
   );
