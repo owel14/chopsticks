@@ -30,7 +30,7 @@ function DemoHand({ value, label, flip, className, style }: {
     <div className={`demo-hand ${className ?? ""}`} style={style}>
       <Image
         src={`/img/${value}.png`}
-        alt={`${value} fingers`}
+        alt={`${value} ${value === 1 ? "finger" : "fingers"}`}
         width={56}
         height={56}
         style={flip ? { transform: "scaleX(-1)" } : undefined}
@@ -150,7 +150,7 @@ export default function TutorialModal({ onClose }: { onClose: () => void }) {
 
           <div className="tutorial-section">
             <p className="tutorial-rule-title">Eliminate</p>
-            <p>If a hand reaches <strong>exactly 5</strong>, it&apos;s knocked out!</p>
+            <p>If a hand reaches <strong>5 or more</strong>, it&apos;s knocked out!</p>
             <EliminateDemo />
           </div>
 
