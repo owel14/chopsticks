@@ -22,6 +22,13 @@ const IMG_TRANSFORMS: Record<HandId, string> = {
   bottomRight: "scaleX(-1)",
 };
 
+const HAND_LABELS: Record<HandId, string> = {
+  topLeft:     "Opponent's top-left hand",
+  topRight:    "Opponent's top-right hand",
+  bottomLeft:  "Your bottom-left hand",
+  bottomRight: "Your bottom-right hand",
+};
+
 const Hand = forwardRef<HTMLDivElement, HandProps>(function Hand(
   { handId, value, previewValue, isZero, canDrag, isDragging, isAnimating, onPointerDown },
   ref
@@ -48,7 +55,7 @@ const Hand = forwardRef<HTMLDivElement, HandProps>(function Hand(
     >
       <Image
         src={`/img/${imgValue}.png`}
-        alt={`${handId} showing ${imgValue} fingers`}
+        alt={`${HAND_LABELS[handId]} showing ${imgValue} ${imgValue === 1 ? "finger" : "fingers"}`}
         width={80}
         height={80}
         style={{ transform: IMG_TRANSFORMS[handId], width: "100%", height: "auto" }}

@@ -1,66 +1,64 @@
-"use client";
+import type { Metadata } from "next";
+import HomeGame from "@/components/HomeGame";
+import GameInfo from "@/components/seo/GameInfo";
+import JsonLd from "@/components/seo/JsonLd";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 
-import { useState } from "react";
-import GameBoard from "@/components/GameBoard";
-import DifficultyModal from "@/components/modals/DifficultyModal";
-import OnlineLobbyModal from "@/components/modals/OnlineLobbyModal";
-import WinnerModal from "@/components/modals/WinnerModal";
-import TutorialModal from "@/components/modals/TutorialModal";
-import { useGame } from "@/lib/hooks/useGame";
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    url: "/",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+};
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: `${SITE_URL}/`,
+      name: SITE_NAME,
+      description: SITE_DESCRIPTION,
+      inLanguage: "en",
+    },
+    {
+      "@type": "WebApplication",
+      "@id": `${SITE_URL}/#app`,
+      url: `${SITE_URL}/`,
+      name: "Chopsticks",
+      alternateName: "Chopsticks hand game",
+      description: SITE_DESCRIPTION,
+      applicationCategory: "GameApplication",
+      genre: "Strategy",
+      operatingSystem: "Any (web browser)",
+      browserRequirements: "Requires a modern browser with JavaScript enabled",
+      inLanguage: "en",
+      isAccessibleForFree: true,
+      numberOfPlayers: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2 },
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+    },
+  ],
+};
 
 export default function Home() {
-  const {
-    gameState,
-    pendingSplit,
-    animatingMove,
-    startGame,
-    executeAdd,
-    setPendingSplit,
-    confirmSplit,
-    playAgain,
-  } = useGame();
-
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [showOnlineLobby, setShowOnlineLobby] = useState(false);
-
   return (
-    <main className="game-container">
-      <button
-        id="info-button"
-        onClick={() => setShowTutorial(true)}
-        aria-label="How to play"
-      >
-        ?
-      </button>
-
-      <GameBoard
-        gameState={gameState}
-        pendingSplit={pendingSplit}
-        animatingMove={animatingMove}
-        onExecuteAdd={executeAdd}
-        onSetPendingSplit={setPendingSplit}
-        onConfirmSplit={confirmSplit}
-      />
-
-      {gameState.phase === "selectDifficulty" && !showOnlineLobby && (
-        <DifficultyModal
-          initialDifficulty={gameState.difficulty}
-          onStart={startGame}
-          onPlayOnline={() => setShowOnlineLobby(true)}
-        />
-      )}
-
-      {gameState.phase === "selectDifficulty" && showOnlineLobby && (
-        <OnlineLobbyModal onBack={() => setShowOnlineLobby(false)} />
-      )}
-
-      {gameState.phase === "gameOver" && gameState.winner && (
-        <WinnerModal winner={gameState.winner} onPlayAgain={playAgain} />
-      )}
-
-      {showTutorial && (
-        <TutorialModal onClose={() => setShowTutorial(false)} />
-      )}
+    <main>
+      <h1 className="sr-only">Chopsticks – the hand game, free to play online</h1>
+      <HomeGame />
+      <GameInfo />
+      <JsonLd data={structuredData} />
     </main>
   );
 }
